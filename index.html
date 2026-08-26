@@ -1,0 +1,2025 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CONTROLLING REPORT | WFM Operational Priority Engine V7.2</title>
+    
+    <!-- Dependencias CDN para Aplicación Autónoma -->
+    <script data-lib="chartjs" src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+    <script data-lib="datalabels" src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script data-lib="xlsx" src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        :root { --bg: #f8fafc; --text: #0f172a; --primary: #1e293b; --accent: #2563eb; --danger: #dc2626; --success: #16a34a; --warning: #d97706; --card-bg: #ffffff; --border-color: #e2e8f0; }
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; }
+        body { background-color: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+        
+        .flex { display: flex; } .flex-col { flex-direction: column; } .items-center { align-items: center; } .justify-between { justify-content: space-between; } .gap-4 { gap: 1rem; } .gap-6 { gap: 1.5rem; }
+        .grid { display: grid; } .grid-cols-1 { grid-template-columns: 1fr; } 
+        @media (min-width: 768px) { .md-grid-4 { grid-template-columns: repeat(4, 1fr); } .md-grid-7 { grid-template-columns: repeat(7, 1fr); } }
+        @media (min-width: 1024px) { .lg-grid-3 { grid-template-columns: repeat(3, 1fr); } .lg-grid-7 { grid-template-columns: repeat(7, 1fr); } }
+        
+        .container { width:100%; max-width:none; margin:0 auto; padding:0 clamp(.75rem,1.25vw,2rem); }
+        .mt-4 { margin-top: 1rem; } .mb-2 { margin-bottom: 0.5rem; } .mb-4 { margin-bottom: 1rem; }
+        
+        .text-xs { font-size: 0.75rem; } .text-sm { font-size: 0.875rem; } .text-lg { font-size: 1.125rem; } .text-2xl { font-size: 1.5rem; } .text-3xl { font-size: 1.875rem; }
+        .font-medium { font-weight: 500; } .font-bold { font-weight: 700; } .font-black { font-weight: 900; }
+        .uppercase { text-transform: uppercase; } .tracking-wide { letter-spacing: 0.05em; } .text-center { text-align: center; } .text-left { text-align: left; }
+        .text-slate-500 { color: #64748b; } .text-slate-800 { color: #1e293b; } .text-white { color: #ffffff; }
+        
+        .header { background: linear-gradient(90deg, #0f172a 0%, #1e293b 100%); color: white; padding: 1rem 1.5rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); position: relative; z-index: 50; }
+        .card { background: var(--card-bg); border-radius: 0.5rem; padding: 1.25rem; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .btn { padding: 0.5rem 1rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 700; cursor: pointer; border: none; transition: opacity 0.2s; color: white; display: inline-flex; align-items: center; }
+        .btn:hover { opacity: 0.9; }
+        .btn-blue { background-color: var(--accent); } .btn-green { background-color: #059669; } .btn-gray { background-color: #475569; }
+        
+        .tabs { border-bottom: 1px solid #cbd5e1; margin-top: 1.5rem; margin-bottom: 1rem; display: flex; gap: 2rem; }
+        .tab { background: none; border: none; padding-bottom: 0.5rem; font-size: 0.875rem; font-weight: 700; color: #64748b; cursor: pointer; text-transform: uppercase; border-bottom: 2px solid transparent; }
+        .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+        .tab-content { display: none; } .tab-content.active { display: block; }
+        
+        .filters { position: sticky; top: 0; z-index: 40; background: var(--bg); padding-bottom: 1rem; padding-top: 0.5rem; }
+        .filters-inner { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; border-left: 4px solid var(--accent); }
+        .filter-col { flex: 1; min-width: 140px; }
+        .filter-col label { display: block; font-size: 0.65rem; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem; }
+        .filter-col select { width: 100%; padding: 0.5rem; border: 1px solid #cbd5e1; border-radius: 0.25rem; font-size: 0.875rem; font-weight: 600; color: #1e293b; background: #f8fafc; outline: none; }
+        .native-multi-select { display:none !important; }
+        .multi-select { position:relative; width:100%; }
+        .multi-select-toggle { width:100%; min-height:35px; padding:0.48rem 0.55rem; border:1px solid #cbd5e1; border-radius:0.3rem; background:#f8fafc; color:#1e293b; cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:0.78rem; font-weight:700; text-align:left; }
+        .multi-select-toggle:hover { border-color:#94a3b8; background:#fff; }
+        .multi-select.open .multi-select-toggle { border-color:var(--accent); box-shadow:0 0 0 2px rgba(37,99,235,.10); background:#fff; }
+        .multi-select-label { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .multi-arrow { color:#64748b; font-size:10px; transition:transform .15s ease; flex:0 0 auto; }
+        .multi-select.open .multi-arrow { transform:rotate(180deg); }
+        .multi-select-menu { display:none; position:absolute; z-index:120; top:calc(100% + 5px); left:0; min-width:max(100%,220px); max-width:340px; max-height:280px; overflow:auto; background:#fff; border:1px solid #cbd5e1; border-radius:7px; box-shadow:0 12px 30px rgba(15,23,42,.18); padding:5px; }
+        .filter-col:nth-child(4) .multi-select-menu { min-width:max(100%,300px); }
+        .multi-select.open .multi-select-menu { display:block; }
+        .multi-option { width:100%; border:0; background:transparent; color:#334155; padding:7px 8px; border-radius:5px; display:flex; align-items:center; gap:8px; text-align:left; cursor:pointer; font-size:0.75rem; font-weight:650; }
+        .multi-option:hover { background:#f1f5f9; }
+        .multi-option.selected { background:#eff6ff; color:#1d4ed8; font-weight:800; }
+        .multi-check { width:14px; height:14px; border:1.5px solid #94a3b8; border-radius:3px; display:inline-flex; align-items:center; justify-content:center; flex:0 0 14px; font-size:10px; line-height:1; color:#fff; background:#fff; }
+        .multi-option.selected .multi-check { background:#2563eb; border-color:#2563eb; }
+        .multi-option.selected .multi-check::after { content:'✓'; }
+        .multi-select-summary { color:#64748b; font-size:0.66rem; font-weight:700; margin-top:3px; min-height:10px; }
+
+        .btn-reset { width: 100%; background: #e2e8f0; color: #1e293b; padding: 0.5rem; border: none; border-radius: 0.25rem; font-weight: 700; font-size: 0.75rem; cursor: pointer; text-transform: uppercase; }
+        
+        .badge { padding: 0.25rem 0.5rem; border-radius: 0.25rem; font-size: 0.65rem; font-weight: 900; text-transform: uppercase; border: 1px solid transparent; }
+        .c-crit { color: var(--danger); } .bg-crit { background: #fee2e2; color: #991b1b; border-color: #f87171; }
+        .c-cont { color: var(--warning); } .bg-cont { background: #ffedd5; color: #9a3412; border-color: #fb923c; }
+        .c-rec { color: #d97706; } .bg-rec { background: #fef3c7; color: #92400e; border-color: #fbbf24; }
+        .c-watch { color: #ca8a04; } .bg-watch { background: #fef9c3; color: #854d0e; border-color: #facc15; }
+        .c-heal { color: var(--success); } .bg-heal { background: #dcfce7; color: #166534; border-color: #4ade80; }
+        .bg-pareto { background:#1e293b; color:#fff; display:inline-flex; align-items:center; justify-content:center; white-space:nowrap; flex:0 0 auto; vertical-align:middle; }
+        .client-title-row { display:flex; align-items:center; gap:6px; flex-wrap:wrap; min-width:0; }
+        .client-title-row .client-name { min-width:0; overflow-wrap:anywhere; }
+        
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+        th { background: #f8fafc; color: #475569; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; padding: 0.75rem 1rem; border-bottom: 2px solid #e2e8f0; }
+        td { padding: 0.75rem 1rem; border-bottom: 1px solid #e2e8f0; color: #334155; font-weight: 500; }
+        tr:hover td { background-color: #f8fafc; }
+        
+        .chart-box { position: relative; width: 100%; height: 230px; margin: 0 auto; }
+        .chart-box-large { position: relative; width: 100%; height: 380px; }
+        
+        .hidden { display: none !important; }
+        .border-t-dark { border-top: 4px solid #1e293b; } .border-t-blue { border-top: 4px solid var(--accent); }
+        .shadow-sm { box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+
+        @media print {
+            .no-print { display: none !important; }
+            body { background: white; }
+            .card { box-shadow: none; border: 1px solid #ccc; break-inside: avoid; margin-bottom: 1rem; }
+            .filters { position: static; }
+        }
+
+
+        /* ===== Executive V3 visual system ===== */
+        .card { border-radius: 10px; box-shadow: 0 2px 8px rgba(15,23,42,.045); }
+        .filters-inner { border-left-width: 4px; padding: 1rem 1.1rem; }
+        .md-grid-7 > .card { min-height: 88px; display:flex; flex-direction:column; justify-content:center; }
+        .md-grid-7 > .card p:first-child { letter-spacing:.035em; }
+        .kpi-sub { margin-top: 2px; font-size: 10px; line-height:1.2; color:#94a3b8; font-weight:700; }
+        .analysis-banner { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:10px 14px; margin-bottom:14px; border-radius:8px; border:1px solid #dbeafe; background:#f8fbff; }
+        .analysis-banner.warning { border-color:#fde68a; background:#fffbeb; }
+        .analysis-banner.good { border-color:#bbf7d0; background:#f0fdf4; }
+        .analysis-left { display:flex; align-items:center; gap:10px; min-width:0; }
+        .mode-pill { flex:none; padding:4px 8px; border-radius:999px; font-size:10px; line-height:1; font-weight:900; letter-spacing:.04em; text-transform:uppercase; background:#dbeafe; color:#1d4ed8; }
+        .warning .mode-pill { background:#fef3c7; color:#92400e; }
+        .good .mode-pill { background:#dcfce7; color:#166534; }
+        .analysis-text { font-size:11px; line-height:1.35; color:#475569; font-weight:600; white-space:normal; }
+        .analysis-formulas { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+        .formula-chip { padding:4px 7px; border-radius:5px; background:#fff; border:1px solid #e2e8f0; color:#64748b; font-size:9px; font-weight:800; white-space:nowrap; }
+        .chart-card-head { display:flex; align-items:flex-start; justify-content:space-between; gap:8px; margin-bottom:4px; }
+        .chart-caption { font-size:9px; line-height:1.25; color:#94a3b8; font-weight:700; }
+        .chart-box { height:245px; }
+        .hotlist-head { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; margin-bottom:12px; }
+        .hotlist-head .method { max-width:900px; margin-top:3px; line-height:1.35; }
+        .hotlist-count { flex:none; font-size:10px; font-weight:800; color:#64748b; background:#f8fafc; border:1px solid #e2e8f0; border-radius:999px; padding:5px 9px; }
+        .hot-table { table-layout:fixed; }
+        .hot-table th { padding:.65rem .7rem; font-size:.64rem; }
+        .hot-table td { padding:.7rem .7rem; vertical-align:middle; }
+        .hot-table tbody tr { transition:background .15s ease; }
+        .hot-table tbody tr:hover td { background:#f8fbff; }
+        .rank-num { width:30px; height:30px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; background:#f1f5f9; color:#64748b; font-weight:900; font-size:11px; }
+        .rank-num.top3 { background:#e0e7ff; color:#3730a3; }
+        .client-name { font-weight:900; color:#0f172a; font-size:12px; line-height:1.2; }
+        .client-meta { margin-top:3px; color:#64748b; font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:.025em; }
+        .client-vol { margin-top:3px; color:#94a3b8; font-size:9px; font-weight:700; }
+        .metric-main { font-size:14px; font-weight:900; color:#0f172a; white-space:nowrap; }
+        .metric-main.danger { color:#b91c1c; }
+        .metric-sub { margin-top:2px; font-size:9px; color:#94a3b8; font-weight:700; line-height:1.2; }
+        .gap-wrap { display:flex; flex-wrap:wrap; gap:4px; }
+        .gap-chip { display:inline-flex; align-items:center; gap:3px; padding:3px 6px; border-radius:5px; background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; font-size:9px; font-weight:900; white-space:nowrap; }
+        .gap-chip.major { background:#fef2f2; border-color:#fecaca; color:#991b1b; }
+        .action-text { color:#475569; font-size:10px; line-height:1.35; font-weight:650; }
+        .action-text strong { color:#1e293b; }
+        .data-gap { display:inline-block; margin-left:4px; padding:2px 4px; border-radius:4px; background:#fef3c7; color:#92400e; font-size:8px; font-weight:900; vertical-align:middle; }
+        .no-data-card { display:flex; align-items:center; justify-content:center; height:100%; color:#94a3b8; font-size:11px; font-weight:700; text-align:center; padding:20px; }
+        @media (max-width: 1100px) {
+            .analysis-banner { align-items:flex-start; flex-direction:column; }
+            .analysis-formulas { justify-content:flex-start; }
+            .hot-table { min-width:1120px; }
+        }
+
+
+        /* ===== Executive V6 Decision Intelligence ===== */
+        @media (min-width: 768px) { .md-grid-5 { grid-template-columns: repeat(5, 1fr); } .md-grid-3 { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 1024px) { .lg-grid-2 { grid-template-columns: repeat(2, 1fr); } .lg-grid-5 { grid-template-columns: repeat(5, 1fr); } }
+        .section-title { display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:10px; }
+        .section-title h3 { font-size:.78rem; font-weight:900; text-transform:uppercase; letter-spacing:.035em; color:#1e293b; }
+        .section-title p { margin-top:3px; font-size:10px; line-height:1.35; font-weight:650; color:#94a3b8; }
+        .metric-card { min-height:94px; display:flex; flex-direction:column; justify-content:center; }
+        .metric-card .label { color:#64748b; font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:.05em; }
+        .metric-card .value { margin-top:5px; color:#0f172a; font-size:20px; line-height:1; font-weight:900; }
+        .metric-card .sub { margin-top:5px; color:#94a3b8; font-size:9px; font-weight:750; line-height:1.25; }
+        .metric-card.danger { border-top:4px solid #dc2626; } .metric-card.primary { border-top:4px solid #2563eb; }
+        .metric-card.success { border-top:4px solid #16a34a; } .metric-card.warning { border-top:4px solid #d97706; }
+        .metric-card.dark { border-top:4px solid #334155; }
+        .analytics-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1.25rem; margin-bottom:1.25rem; }
+        .analytics-grid .wide { grid-column:1 / -1; }
+        .chart-box-xl { position:relative; width:100%; height:410px; }
+        .chart-box-med { position:relative; width:100%; height:300px; }
+        .method-box { padding:10px 12px; border:1px solid #dbeafe; background:#f8fbff; border-radius:7px; color:#475569; font-size:10px; line-height:1.45; font-weight:650; }
+        .method-box strong { color:#1e293b; }
+        .method-box.warning { border-color:#fde68a; background:#fffbeb; }
+        .quality-row { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+        .quality-chip { padding:4px 7px; border-radius:999px; border:1px solid #e2e8f0; background:#fff; color:#64748b; font-size:9px; font-weight:850; white-space:nowrap; }
+        .quality-chip.bad { border-color:#fecaca; background:#fef2f2; color:#991b1b; }
+        .quality-chip.warn { border-color:#fde68a; background:#fffbeb; color:#92400e; }
+        .quality-chip.good { border-color:#bbf7d0; background:#f0fdf4; color:#166534; }
+        .corr-wrap { overflow:auto; padding-bottom:3px; }
+        .corr-matrix { border-collapse:separate; border-spacing:4px; min-width:720px; font-size:10px; }
+        .corr-matrix th { background:transparent; border:none; padding:6px; font-size:9px; color:#64748b; }
+        .corr-matrix td { border:none; border-radius:6px; padding:10px 7px; text-align:center; font-weight:900; min-width:72px; }
+        .corr-note { margin-top:7px; color:#94a3b8; font-size:9px; font-weight:700; line-height:1.35; }
+        .breakdown-controls { display:flex; align-items:center; gap:8px; }
+        .breakdown-controls label { color:#64748b; font-size:9px; font-weight:900; text-transform:uppercase; }
+        .breakdown-controls select { border:1px solid #cbd5e1; background:#fff; border-radius:5px; padding:5px 7px; color:#334155; font-size:10px; font-weight:750; }
+        .insight-strip { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-bottom:1rem; }
+        .insight-item { border:1px solid #e2e8f0; background:#fff; border-radius:8px; padding:10px 12px; }
+        .insight-item .eyebrow { font-size:8px; color:#94a3b8; font-weight:900; text-transform:uppercase; letter-spacing:.05em; }
+        .insight-item .headline { margin-top:3px; font-size:11px; color:#1e293b; font-weight:900; line-height:1.25; }
+        .insight-item .detail { margin-top:3px; font-size:9px; color:#64748b; font-weight:650; line-height:1.3; }
+        @media (max-width: 900px) { .analytics-grid { grid-template-columns:1fr; } .analytics-grid .wide { grid-column:auto; } .insight-strip { grid-template-columns:1fr; } }
+
+        /* ===== V7.2 Calculation Model & Glossary ===== */
+        .tabs { flex-wrap:wrap; }
+        .model-hero { background:linear-gradient(135deg,#0f172a 0%,#1e293b 62%,#1d4ed8 150%); color:#fff; border:none; padding:1.35rem 1.5rem; margin-bottom:1.1rem; }
+        .model-hero .eyebrow { font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:.09em; color:#93c5fd; }
+        .model-hero h2 { margin-top:5px; font-size:1.3rem; font-weight:900; letter-spacing:.01em; }
+        .model-hero p { margin-top:6px; max-width:1050px; font-size:11px; line-height:1.5; color:#cbd5e1; font-weight:600; }
+        .model-hero-meta { margin-top:10px; display:flex; flex-wrap:wrap; gap:6px; }
+        .model-hero-chip { padding:4px 8px; border-radius:999px; border:1px solid rgba(255,255,255,.16); background:rgba(255,255,255,.07); color:#e2e8f0; font-size:9px; font-weight:850; }
+        .model-section { margin-bottom:1.15rem; }
+        .model-section-head { display:flex; align-items:flex-end; justify-content:space-between; gap:12px; margin-bottom:9px; }
+        .model-section-head h3 { color:#1e293b; font-size:.82rem; font-weight:900; text-transform:uppercase; letter-spacing:.04em; }
+        .model-section-head p { margin-top:3px; color:#94a3b8; font-size:10px; line-height:1.35; font-weight:650; }
+        .read-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:10px; }
+        .read-step { position:relative; min-height:132px; padding:13px 13px 12px 45px; background:#fff; border:1px solid #e2e8f0; border-radius:9px; }
+        .read-step .num { position:absolute; left:12px; top:12px; width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#dbeafe; color:#1d4ed8; font-size:10px; font-weight:900; }
+        .read-step h4 { color:#0f172a; font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:.025em; }
+        .read-step p { margin-top:5px; color:#64748b; font-size:9.5px; line-height:1.45; font-weight:650; }
+        .flow-grid { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:7px; }
+        .flow-node { min-height:90px; padding:10px 9px; border:1px solid #dbeafe; border-radius:8px; background:#f8fbff; text-align:center; display:flex; flex-direction:column; justify-content:center; }
+        .flow-node .tag { color:#2563eb; font-size:8px; font-weight:900; text-transform:uppercase; letter-spacing:.05em; }
+        .flow-node .formula { margin-top:4px; color:#0f172a; font-size:10px; line-height:1.25; font-weight:900; }
+        .flow-node .desc { margin-top:4px; color:#64748b; font-size:8.5px; line-height:1.3; font-weight:650; }
+        .model-two-col { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+        .model-table { width:100%; border-collapse:collapse; table-layout:fixed; }
+        .model-table th { padding:8px 9px; font-size:9px; }
+        .model-table td { padding:8px 9px; font-size:9.5px; line-height:1.35; vertical-align:top; }
+        .model-table td strong { color:#1e293b; }
+        .dir-low { color:#9a3412; background:#fff7ed; border:1px solid #fed7aa; }
+        .dir-high { color:#166534; background:#f0fdf4; border:1px solid #bbf7d0; }
+        .dir-excl { color:#475569; background:#f8fafc; border:1px solid #e2e8f0; }
+        .dir-pill { display:inline-block; padding:3px 6px; border-radius:999px; font-size:8px; font-weight:900; text-transform:uppercase; white-space:nowrap; }
+        .formula-list { display:grid; gap:7px; }
+        .formula-row { padding:9px 10px; border:1px solid #e2e8f0; border-radius:7px; background:#fff; }
+        .formula-row .name { color:#64748b; font-size:8px; font-weight:900; text-transform:uppercase; letter-spacing:.05em; }
+        .formula-row .eq { margin-top:3px; color:#0f172a; font-size:10px; font-weight:900; line-height:1.35; }
+        .formula-row .note { margin-top:3px; color:#94a3b8; font-size:8.5px; line-height:1.35; font-weight:650; }
+        .dedupe-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+        .dedupe-card { padding:12px; border-radius:8px; background:#fff; border:1px solid #e2e8f0; }
+        .dedupe-card .title { font-size:10px; color:#1e293b; font-weight:900; text-transform:uppercase; }
+        .dedupe-card .big { margin-top:5px; font-size:15px; color:#2563eb; font-weight:900; }
+        .dedupe-card p { margin-top:5px; color:#64748b; font-size:9px; line-height:1.42; font-weight:650; }
+        .status-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; }
+        .status-card { padding:10px; border-radius:8px; border:1px solid #e2e8f0; background:#fff; }
+        .status-card .status-name { font-size:9px; font-weight:900; text-transform:uppercase; }
+        .status-card .status-rule { margin-top:4px; color:#64748b; font-size:8.5px; line-height:1.38; font-weight:650; }
+        .gloss-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+        .gloss-card { padding:10px 11px; border-radius:8px; background:#fff; border:1px solid #e2e8f0; }
+        .gloss-card .term { color:#1e293b; font-size:9px; font-weight:900; text-transform:uppercase; }
+        .gloss-card .def { margin-top:4px; color:#64748b; font-size:8.8px; line-height:1.42; font-weight:650; }
+        .model-callout { padding:11px 13px; border-left:4px solid #2563eb; background:#eff6ff; color:#475569; border-radius:0 8px 8px 0; font-size:9.5px; line-height:1.45; font-weight:650; }
+        .model-callout strong { color:#1e293b; }
+        .model-callout.warning { border-left-color:#d97706; background:#fffbeb; }
+        @media (max-width:1100px) { .read-grid { grid-template-columns:repeat(2,1fr); } .flow-grid { grid-template-columns:repeat(3,1fr); } .status-grid { grid-template-columns:repeat(3,1fr); } }
+        @media (max-width:760px) { .read-grid,.model-two-col,.dedupe-grid,.gloss-grid,.status-grid,.flow-grid { grid-template-columns:1fr; } }
+
+        .hotlist-local-controls{display:flex;align-items:center;gap:.55rem}.hotlist-local-controls label{font-size:.65rem;font-weight:800;text-transform:uppercase;color:#64748b}.hotlist-local-controls select,.mini-select{padding:.48rem .65rem;border:1px solid #cbd5e1;border-radius:6px;background:#fff;color:#1e293b;font-size:.75rem;font-weight:700;outline:none}.hotlist-local-controls select:focus,.mini-select:focus{border-color:#2563eb;box-shadow:0 0 0 2px rgba(37,99,235,.08)}
+        .simulator-intro{display:flex;justify-content:space-between;align-items:center;border-left:4px solid #2563eb}.simulator-intro h3{font-size:1.15rem;font-weight:900;color:#1e293b;margin:.15rem 0 .25rem}.simulator-intro p{font-size:.78rem;color:#64748b;max-width:900px;line-height:1.45}.sim-badge{font-size:.68rem;font-weight:900;text-transform:uppercase;padding:.45rem .7rem;border-radius:999px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;white-space:nowrap}.sim-controls{display:grid;grid-template-columns:1.45fr 1fr 1fr .8fr .8fr .9fr 1fr .7fr;gap:.75rem;margin:1rem 0}.sim-control label{display:block;font-size:.62rem;font-weight:900;text-transform:uppercase;color:#64748b;margin-bottom:.3rem}.sim-control select,.sim-control input{width:100%}.sim-static{min-height:35px;padding:.52rem .65rem;border:1px solid #e2e8f0;border-radius:6px;background:#f8fafc;font-size:.76rem;font-weight:800;color:#1e293b}.sim-input-wrap{display:flex;align-items:center;border:1px solid #cbd5e1;border-radius:6px;background:#fff;overflow:hidden}.sim-input-wrap input{border:0;padding:.5rem .6rem;font-size:.76rem;font-weight:800;outline:none;min-width:0}.sim-input-wrap span{padding:0 .55rem;color:#64748b;font-weight:900}.sim-target-btn{width:100%;padding:.55rem .5rem;border:0;border-radius:6px;background:#2563eb;color:#fff;font-size:.67rem;font-weight:900;cursor:pointer}.sim-target-btn:disabled{opacity:.45;cursor:not-allowed}.sim-source-note{font-size:.72rem;color:#64748b;background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:.7rem .8rem}.sim-kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:.75rem;margin-top:1rem}.sim-kpi{padding:.9rem;border-radius:8px;border:1px solid #e2e8f0;background:#fff}.sim-kpi .label{font-size:.62rem;font-weight:900;text-transform:uppercase;color:#64748b}.sim-kpi .value{font-size:1.25rem;font-weight:900;color:#0f172a;margin:.2rem 0}.sim-kpi .sub{font-size:.66rem;color:#64748b;line-height:1.35}.sim-kpi.good{border-top:3px solid #16a34a}.sim-kpi.warn{border-top:3px solid #d97706}.sim-kpi.info{border-top:3px solid #2563eb}.sim-grid{display:grid;grid-template-columns:1.5fr 1fr;gap:1rem}.sim-inner-card{padding:1rem}.sim-narrative{padding:1.15rem;border-left:4px solid #334155}.sim-narrative .headline{font-size:1rem;font-weight:900;color:#1e293b;line-height:1.35;margin:.3rem 0 .55rem}.sim-narrative .detail{font-size:.76rem;color:#64748b;line-height:1.55}.sim-assumptions{margin-top:1rem;display:grid;gap:.55rem}.sim-assumption{font-size:.7rem;line-height:1.45;color:#475569;background:#f8fafc;border-radius:6px;padding:.6rem .7rem;border:1px solid #e2e8f0}.stat-pill{padding:.35rem .6rem;border-radius:999px;background:#f1f5f9;color:#475569;border:1px solid #cbd5e1;font-size:.66rem;font-weight:900}.stat-pill.good{background:#ecfdf5;color:#15803d;border-color:#bbf7d0}.stat-pill.warn{background:#fffbeb;color:#b45309;border-color:#fde68a}.stat-pill.bad{background:#fef2f2;color:#b91c1c;border-color:#fecaca}
+        @media(max-width:1250px){.sim-controls{grid-template-columns:repeat(4,1fr)}.sim-kpi-grid{grid-template-columns:repeat(3,1fr)}}@media(max-width:800px){.sim-controls,.sim-kpi-grid,.sim-grid{grid-template-columns:1fr}.simulator-intro{align-items:flex-start;gap:1rem;flex-direction:column}}
+        .priority-score-wrap strong{font-size:1rem;color:#1e293b}.priority-score-wrap small{display:block;font-size:.58rem;color:#94a3b8;margin-top:.18rem}.priority-bar{height:4px;background:#e2e8f0;border-radius:999px;overflow:hidden;margin-top:.25rem}.priority-bar span{display:block;height:100%;background:#2563eb;border-radius:999px}
+
+        /* ===== V7.2 Adaptive desktop/mobile layout ===== */
+        .btn-view{background:#64748b;white-space:nowrap}
+        @media (min-width:1800px){
+            .container{padding-left:2rem;padding-right:2rem}
+            .chart-box{height:280px}.chart-box-med{height:340px}.chart-box-xl{height:450px}
+            .card{padding:1.35rem}
+        }
+        .mobile-layout .container{padding:0 .65rem}
+        .mobile-layout .header{flex-direction:column;align-items:flex-start;gap:.65rem;padding:.8rem .75rem}
+        .mobile-layout #headerControls{width:100%;flex-direction:column;align-items:stretch;gap:.55rem}
+        .mobile-layout #dataSourceControl{width:100%;justify-content:space-between}
+        .mobile-layout #dataSourceControl input{width:min(58vw,240px)!important}
+        .mobile-layout #headerControls>div.flex{width:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.4rem}
+        .mobile-layout #headerControls .btn{width:100%;justify-content:center;padding:.55rem .35rem;font-size:.66rem}
+        .mobile-layout .tabs{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;gap:1rem;scrollbar-width:thin;padding-bottom:2px}
+        .mobile-layout .tab{flex:0 0 auto;font-size:.72rem;white-space:nowrap}
+        .mobile-layout .filters{position:static}
+        .mobile-layout .filters-inner{display:grid;grid-template-columns:1fr;gap:.7rem;padding:.85rem;border-left-width:3px}
+        .mobile-layout .filter-col{min-width:0;width:100%}
+        .mobile-layout .multi-select-menu{min-width:100%;max-width:calc(100vw - 2rem)}
+        .mobile-layout .analysis-banner{align-items:flex-start;flex-direction:column;padding:9px 10px}
+        .mobile-layout .analysis-formulas{justify-content:flex-start}
+        .mobile-layout .grid,.mobile-layout .analytics-grid,.mobile-layout .insight-strip,.mobile-layout .read-grid,.mobile-layout .model-two-col,.mobile-layout .dedupe-grid,.mobile-layout .gloss-grid,.mobile-layout .status-grid,.mobile-layout .flow-grid,.mobile-layout .sim-controls,.mobile-layout .sim-kpi-grid,.mobile-layout .sim-grid{grid-template-columns:1fr!important}
+        .mobile-layout .analytics-grid .wide{grid-column:auto}
+        .mobile-layout .card{padding:1rem;border-radius:9px}
+        .mobile-layout .chart-box{height:270px}.mobile-layout .chart-box-med{height:300px}.mobile-layout .chart-box-large,.mobile-layout .chart-box-xl{height:340px}
+        .mobile-layout .section-title,.mobile-layout .hotlist-head,.mobile-layout .simulator-intro{flex-direction:column;align-items:flex-start;gap:.6rem}
+        .mobile-layout .breakdown-controls,.mobile-layout .hotlist-local-controls{width:100%;justify-content:space-between}
+        .mobile-layout .breakdown-controls select,.mobile-layout .hotlist-local-controls select{min-width:135px}
+        .mobile-layout .table-wrap{overflow:visible}
+        .mobile-layout .hot-table{min-width:0!important;table-layout:auto;border-collapse:separate;border-spacing:0 10px}
+        .mobile-layout .hot-table thead,.mobile-layout .hot-table colgroup{display:none}
+        .mobile-layout .hot-table,.mobile-layout .hot-table tbody,.mobile-layout .hot-table tr,.mobile-layout .hot-table td{display:block;width:100%}
+        .mobile-layout .hot-table tr{background:#fff;border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(15,23,42,.04)}
+        .mobile-layout .hot-table td{display:grid;grid-template-columns:105px minmax(0,1fr);gap:10px;align-items:start;padding:.62rem .75rem;border-bottom:1px solid #f1f5f9;text-align:left!important}
+        .mobile-layout .hot-table td:last-child{border-bottom:0}
+        .mobile-layout .hot-table td::before{content:attr(data-label);font-size:.61rem;line-height:1.2;font-weight:900;text-transform:uppercase;letter-spacing:.035em;color:#94a3b8;padding-top:2px}
+        .mobile-layout .hot-table td[data-label="Client"]{grid-template-columns:1fr}
+        .mobile-layout .hot-table td[data-label="Client"]::before{display:none}
+        .mobile-layout .hot-table .priority-score-wrap{max-width:210px}
+        .mobile-layout .model-hero{padding:1.1rem}
+        .mobile-layout .model-hero h2{font-size:1.12rem}
+        .mobile-layout .model-table{min-width:650px}
+        .mobile-layout .model-section .card{overflow-x:auto}
+        @media(max-width:520px){
+            .mobile-layout #headerControls>div.flex{grid-template-columns:repeat(2,minmax(0,1fr))}
+            .mobile-layout .hot-table td{grid-template-columns:88px minmax(0,1fr)}
+            .mobile-layout .analysis-formulas{display:none}
+            .mobile-layout .text-2xl{font-size:1.25rem}.mobile-layout .text-3xl{font-size:1.55rem}
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header flex justify-between items-center no-print">
+        <div>
+            <h1 class="text-2xl font-black">CONTROLLING REPORT</h1>
+            <p class="text-xs" style="color:#94a3b8; margin-top:2px;">REGIONAL WFM PERFORMANCE, PRIORITY & SCENARIO DECISION ENGINE</p>
+        </div>
+        <div class="flex items-center gap-4" id="headerControls">
+            <div id="dataSourceControl" style="background:rgba(255,255,255,0.1); padding:6px 12px; border-radius:4px; display:flex; align-items:center; gap:8px;">
+                <span class="text-xs font-bold" style="color:#cbd5e1;">DATA SOURCE:</span>
+                <input type="file" id="fileUpload" accept=".xlsx, .xls, .csv" style="font-size:11px; color:white; width:180px;" onchange="processFile(event)">
+            </div>
+            <div class="flex gap-2">
+                <button id="viewModeBtn" onclick="toggleViewMode()" class="btn btn-view" title="Alternar vista escritorio / celular">MOBILE VIEW</button>
+                <button onclick="exportHTML()" class="btn btn-blue" title="Guardar HTML Interactivo Autónomo">SAVE HTML</button>
+                <button onclick="exportCSV()" class="btn btn-green" title="Descargar HotList (CSV)">CSV</button>
+                <button onclick="window.print()" class="btn btn-gray" title="Imprimir PDF">PDF</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="container hidden" id="mainDashboard">
+        
+        <div class="tabs no-print">
+            <!-- Inline Binding para supervivencia post-exportación -->
+            <button class="tab active" onclick="switchTab('dash', this)">Executive Dashboard</button>
+            <button class="tab" onclick="switchTab('econ', this)">Portfolio Intelligence</button>
+            <button class="tab" onclick="switchTab('evol', this)">Trends & Drivers</button>
+            <button class="tab" onclick="switchTab('whatif', this)">What If</button>
+            <button class="tab" onclick="switchTab('model', this)">Model & Glossary</button>
+        </div>
+
+        <div class="filters no-print">
+            <div class="card filters-inner">
+                <!-- Inline onchange para regeneración autónoma -->
+                <div class="filter-col">
+                    <label>Periodo de Análisis</label>
+                    <div class="multi-select" id="ms-fltMonth">
+                        <button type="button" class="multi-select-toggle" onclick="toggleMultiSelect('fltMonth', event)"><span class="multi-select-label" id="fltMonthLabel">Latest Available Month</span><span class="multi-arrow">▼</span></button>
+                        <div class="multi-select-menu" id="fltMonthMenu"></div>
+                        <select id="fltMonth" class="native-multi-select" multiple><option value="ALL" selected>Latest Available Month</option></select>
+                    </div>
+                    <div class="multi-select-summary" id="fltMonthSummary"></div>
+                </div>
+                <div class="filter-col">
+                    <label>País</label>
+                    <div class="multi-select" id="ms-fltCountry">
+                        <button type="button" class="multi-select-toggle" onclick="toggleMultiSelect('fltCountry', event)"><span class="multi-select-label" id="fltCountryLabel">All Countries</span><span class="multi-arrow">▼</span></button>
+                        <div class="multi-select-menu" id="fltCountryMenu"></div>
+                        <select id="fltCountry" class="native-multi-select" multiple><option value="ALL" selected>All Countries</option></select>
+                    </div>
+                    <div class="multi-select-summary" id="fltCountrySummary"></div>
+                </div>
+                <div class="filter-col">
+                    <label>C-Level / VP</label>
+                    <div class="multi-select" id="ms-fltCLevel">
+                        <button type="button" class="multi-select-toggle" onclick="toggleMultiSelect('fltCLevel', event)"><span class="multi-select-label" id="fltCLevelLabel">All C-Levels</span><span class="multi-arrow">▼</span></button>
+                        <div class="multi-select-menu" id="fltCLevelMenu"></div>
+                        <select id="fltCLevel" class="native-multi-select" multiple><option value="ALL" selected>All C-Levels</option></select>
+                    </div>
+                    <div class="multi-select-summary" id="fltCLevelSummary"></div>
+                </div>
+                <div class="filter-col">
+                    <label>Client</label>
+                    <div class="multi-select" id="ms-fltClient">
+                        <button type="button" class="multi-select-toggle" onclick="toggleMultiSelect('fltClient', event)"><span class="multi-select-label" id="fltClientLabel">All Clients</span><span class="multi-arrow">▼</span></button>
+                        <div class="multi-select-menu" id="fltClientMenu"></div>
+                        <select id="fltClient" class="native-multi-select" multiple><option value="ALL" selected>All Clients</option></select>
+                    </div>
+                    <div class="multi-select-summary" id="fltClientSummary"></div>
+                </div>
+                <div class="filter-col">
+                    <label>Risk Status</label>
+                    <div class="multi-select" id="ms-fltRisk">
+                        <button type="button" class="multi-select-toggle" onclick="toggleMultiSelect('fltRisk', event)"><span class="multi-select-label" id="fltRiskLabel">All Statuses</span><span class="multi-arrow">▼</span></button>
+                        <div class="multi-select-menu" id="fltRiskMenu"></div>
+                        <select id="fltRisk" class="native-multi-select" multiple><option value="ALL" selected>All Statuses</option><option value="Critical Review">Critical Review</option><option value="Continuous Review">Continuous Review</option><option value="Recovery Watch">Recovery Watch</option><option value="Watchlist">Watchlist</option><option value="Healthy">Healthy</option></select>
+                    </div>
+                    <div class="multi-select-summary" id="fltRiskSummary"></div>
+                </div>
+                <div class="filter-col">
+                    <label>Focus KPI</label>
+                    <div class="multi-select" id="ms-fltKPI">
+                        <button type="button" class="multi-select-toggle" onclick="toggleMultiSelect('fltKPI', event)"><span class="multi-select-label" id="fltKPILabel">All KPIs</span><span class="multi-arrow">▼</span></button>
+                        <div class="multi-select-menu" id="fltKPIMenu"></div>
+                        <select id="fltKPI" class="native-multi-select" multiple><option value="ALL" selected>All KPIs</option><option value="ABS ACIDO">ABS ACIDO</option><option value="ABS CORREGIDO">ABS CORREGIDO</option><option value="ATT">ATT</option><option value="B2P OPS">B2P OPS</option><option value="GM%">GM%</option><option value="MLOTT">MLOTT</option><option value="SHKG">SHKG</option></select>
+                    </div>
+                    <div class="multi-select-summary" id="fltKPISummary"></div>
+                </div>
+                <div class="filter-col" style="min-width: 100px;">
+                    <button class="btn-reset" onclick="resetFilters()">RESET</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="analysisBanner" class="analysis-banner warning">
+            <div class="analysis-left">
+                <span class="mode-pill" id="analysisModePill">Analysis mode</span>
+                <span class="analysis-text" id="analysisModeText">Waiting for source diagnostics...</span>
+            </div>
+            <div class="analysis-formulas">
+                <span class="formula-chip">Adverse gap = Actual vs Target</span>
+                <span class="formula-chip">Hot List rank = Revenue of adverse accounts</span>
+                <span class="formula-chip">Pareto = cumulative adverse Revenue share</span>
+            </div>
+        </div>
+
+        <div class="mt-4 pb-8">
+            
+            <div id="view-dash" class="tab-content active">
+                <div class="grid grid-cols-1 md-grid-7 gap-4 mb-4">
+                    <div class="card text-center" style="border-top: 4px solid #64748b;"><p class="text-xs font-bold text-slate-500 uppercase">Analyzed Clients</p><p class="text-3xl font-black mt-1" id="kTotal">0</p></div>
+                    <div class="card text-center" style="border-top: 4px solid var(--danger);"><p class="text-xs font-bold uppercase c-crit">Critical</p><p class="text-3xl font-black mt-1 c-crit" id="kCrit">0</p></div>
+                    <div class="card text-center" style="border-top: 4px solid var(--warning);"><p class="text-xs font-bold uppercase c-cont">Continuous</p><p class="text-3xl font-black mt-1 c-cont" id="kCont">0</p></div>
+                    <div class="card text-center" style="border-top: 4px solid #f59e0b;"><p class="text-xs font-bold uppercase c-rec">Recovery</p><p class="text-3xl font-black mt-1 c-rec" id="kRec">0</p></div>
+                    <div class="card text-center" style="border-top: 4px solid #facc15;"><p class="text-xs font-bold uppercase c-watch">Watchlist</p><p class="text-3xl font-black mt-1 c-watch" id="kWatch">0</p></div>
+                    <div class="card text-center" style="border-top: 4px solid var(--success);"><p class="text-xs font-bold uppercase c-heal">Healthy</p><p class="text-3xl font-black mt-1 c-heal" id="kHeal">0</p></div>
+                    <div class="card text-center bg-slate-50 border-t-dark"><p class="text-xs font-bold uppercase text-slate-500" id="kExposureLabel">Top 10 Adverse Revenue Share</p><p class="text-2xl font-black mt-1 text-slate-800" id="kRev">—</p><p class="kpi-sub" id="kExposureSub">Revenue concentration across adverse accounts</p></div>
+                </div>
+
+                <div class="grid grid-cols-1 lg-grid-3 gap-6 mb-6">
+                    <div class="card flex flex-col">
+                        <h3 class="text-xs font-bold uppercase text-slate-800 mb-2">Portfolio Risk Distribution</h3>
+                        <div class="chart-box"><canvas id="chRisk"></canvas></div>
+                    </div>
+                    <div class="card flex flex-col">
+                        <div class="chart-card-head"><div><h3 class="text-xs font-bold uppercase text-slate-800" id="lblDriverChart">Impact by KPI</h3><p class="chart-caption" id="capDriverChart">Adverse contribution to selected portfolio</p></div></div>
+                        <div class="chart-box"><canvas id="chDrivers"></canvas></div>
+                    </div>
+                    <div class="card flex flex-col">
+                        <div class="chart-card-head"><div><h3 class="text-xs font-bold uppercase text-slate-800" id="lblCLevelChart">Impact by C-Level</h3><p class="chart-caption" id="capCLevelChart">Concentration by executive portfolio</p></div></div>
+                        <div class="chart-box"><canvas id="chCLevel"></canvas></div>
+                    </div>
+                </div>
+
+                <div class="card border-t-dark">
+                    <div class="hotlist-head">
+                        <div>
+                            <h3 class="text-sm font-black uppercase text-slate-800" id="hotlistTitle">Executive Hot List — Bottom Accounts</h3>
+                            <p class="text-xs font-medium text-slate-500 method" id="hotlistMethod">MLOTT excluded. Ranking will adapt to source coverage.</p>
+                        </div>
+                        <div class="hotlist-local-controls no-print">
+                            <label for="hotlistTopN">Show</label>
+                            <select id="hotlistTopN" onchange="renderTable()">
+                                <option value="5">Top 5</option>
+                                <option value="10" selected>Top 10</option>
+                                <option value="15">Top 15</option>
+                                <option value="20">Top 20</option>
+                                <option value="25">Top 25</option>
+                                <option value="50">Top 50</option>
+                                <option value="ALL">All</option>
+                            </select>
+                            <span class="hotlist-count" id="hotlistCount">Top 0</span>
+                        </div>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="hot-table">
+                            <colgroup>
+                                <col style="width:5%"><col style="width:17%"><col style="width:11%"><col style="width:13%"><col style="width:8%"><col style="width:20%"><col style="width:26%">
+                            </colgroup>
+                            <thead>
+                                <tr>
+                                    <th class="text-center">Rank</th>
+                                    <th class="text-left">Client Context</th>
+                                    <th class="text-center">Status</th>
+                                    <th class="text-left" id="thExposure">Revenue Index</th>
+                                    <th class="text-center">Share</th>
+                                    <th class="text-left">KPI Gaps</th>
+                                    <th class="text-left">Executive Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tbHotlist"><tr><td colspan="7" class="text-center">Awaiting Data...</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+
+            <div id="view-econ" class="tab-content">
+                <div class="grid grid-cols-1 md-grid-5 gap-4 mb-4">
+                    <div class="card metric-card primary"><div class="label">Pareto Accounts</div><div class="value" id="eNet">—</div><div class="sub" id="eNetSub">Accounts inside the leading 80% priority concentration</div></div>
+                    <div class="card metric-card dark"><div class="label">Top 10 Concentration</div><div class="value" id="eGross">—</div><div class="sub">Share of Revenue across adverse accounts</div></div>
+                    <div class="card metric-card warning"><div class="label">Primary Driver</div><div class="value" id="eAvoided">—</div><div class="sub" id="eAvoidedSub">KPI attached to the largest share of adverse-account Revenue</div></div>
+                    <div class="card metric-card success"><div class="label">Adverse Revenue Share</div><div class="value" id="eRate">—</div><div class="sub">Share of selected portfolio Revenue carried by adverse accounts</div></div>
+                    <div class="card metric-card"><div class="label">Revenue Coverage</div><div class="value" id="eTop10">—</div><div class="sub">Coverage available for Revenue-based ranking</div></div>
+                </div>
+
+                <div class="insight-strip">
+                    <div class="insight-item"><div class="eyebrow">Portfolio signal</div><div class="headline" id="insightPortfolio">Awaiting data</div><div class="detail" id="insightPortfolioDetail">—</div></div>
+                    <div class="insight-item"><div class="eyebrow">Primary driver</div><div class="headline" id="insightDriver">Awaiting data</div><div class="detail" id="insightDriverDetail">—</div></div>
+                    <div class="insight-item"><div class="eyebrow">Data reliability</div><div class="headline" id="insightQuality">Awaiting data</div><div class="detail" id="insightQualityDetail">—</div></div>
+                </div>
+
+                <div class="analytics-grid">
+                    <div class="card">
+                        <div class="section-title"><div><h3>Revenue Pareto — Adverse Accounts</h3><p>Accounts enter the Pareto only when at least one risk-eligible KPI is adverse. Once eligible, ranking is based on Revenue only. Bars show each account's share of adverse-account Revenue; the line shows cumulative share.</p></div><span class="badge" style="background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe;">80% Pareto</span></div>
+                        <div class="chart-box-med"><canvas id="chWaterfall"></canvas></div>
+                    </div>
+                    <div class="card">
+                        <div class="section-title"><div><h3>Primary Driver Revenue Mix</h3><p>Share of adverse-account Revenue assigned to each account's #1 operational KPI driver. Each account contributes once, avoiding double counting across KPIs.</p></div></div>
+                        <div class="chart-box-med"><canvas id="chGrossNetKPI"></canvas></div>
+                    </div>
+                    <div class="card wide">
+                        <div class="section-title"><div><h3>Business Weight vs KPI Severity</h3><p>X = revenue share of selected portfolio; Y = adverse KPI severity index; bubble size = PPH. Upper-right accounts combine materiality and operational gap.</p></div></div>
+                        <div class="chart-box-xl"><canvas id="chBubble"></canvas></div>
+                    </div>
+                </div>
+                <div class="method-box" id="netMethodBox">
+                    <strong>Priority methodology:</strong> KPI Actual vs Target determines whether an account is adverse and what action is required. Among adverse accounts, Hot List ranking and Pareto are based on Revenue only. MLOTT and ABS Corregido remain excluded from risk; ABS Ácido is the absence KPI used for prioritization.
+                </div>
+            </div>
+
+            <div id="view-evol" class="tab-content">
+                <div class="analytics-grid">
+                    <div class="card">
+                        <div class="section-title"><div><h3>Monthly Adverse Revenue Share</h3><p>Tracks what share of the selected portfolio Revenue sits in accounts with at least one adverse risk-eligible KPI.</p></div></div>
+                        <div class="chart-box-med"><canvas id="chExposureTrend"></canvas></div>
+                    </div>
+                    <div class="card">
+                        <div class="section-title">
+                            <div><h3>Adverse Revenue Evolution by Portfolio Dimension</h3><p>Stacked share of total portfolio Revenue carried by adverse accounts. Top contributors are shown; remaining items roll into Other.</p></div>
+                            <div class="breakdown-controls"><label>Breakdown</label><select id="trendBreakdown" onchange="renderTrendBreakdown()"><option value="Country">Country</option><option value="CLevel">C-Level</option><option value="Client">Client</option></select></div>
+                        </div>
+                        <div class="chart-box-med"><canvas id="chTrendBreakdown"></canvas></div>
+                    </div>
+                </div>
+                <div class="card border-t-blue mb-6">
+                    <div class="section-title">
+                        <div>
+                            <h3 class="text-sm font-black uppercase text-slate-800 tracking-wide" id="lblChartEvol">HISTORICAL KPI-DENOMINATOR WEIGHTED EVOLUTION</h3>
+                            <p>Actual vs Target evolution using each KPI native denominator. KPI selection is independent from the global Focus KPI filter.</p>
+                        </div>
+                        <div class="breakdown-controls">
+                            <label>KPI</label>
+                            <select id="evolKPI" onchange="renderEvolChart()"><option value="B2P OPS">B2P OPS</option></select>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="badge" style="background:#eff6ff; color:#1d4ed8; border-color:#bfdbfe;">Denominator-Weighted</span>
+                    </div>
+                    <div class="chart-box-large"><canvas id="chEvol"></canvas></div>
+                </div>
+
+
+                <div class="card mb-6">
+                    <div class="section-title"><div><h3>Adverse-Gap Correlation Matrix</h3><p>Historical Pearson correlation of adverse KPI gaps for the selected portfolio. Used to detect potential double counting.</p></div><span class="badge" id="corrThresholdBadge" style="background:#f1f5f9;color:#334155;border-color:#cbd5e1;">Overlap threshold r ≥ 0.60</span></div>
+                    <div class="corr-wrap" id="corrMatrixWrap"><div class="no-data-card">Awaiting data...</div></div>
+                    <div class="corr-note" id="corrMatrixNote">Correlation is a statistical overlap signal, not proof of causality. ABS Ácido/Corregido are de-duplicated by business rule regardless of correlation.</div>
+                </div>
+
+                <div class="card border-t-dark">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h3 class="text-sm font-black uppercase text-slate-800 tracking-wide">CORRELATION ANALYSIS (PEARSON)</h3>
+                            <p class="text-xs font-medium text-slate-500 mt-1">Evaluates correlation across accounts.</p>
+                        </div>
+                        <span class="badge" style="background:#f1f5f9; color:#334155; border-color:#cbd5e1; font-size:14px; padding:6px 12px;" id="lblCorrVal">r = N/A</span>
+                    </div>
+                    <div class="flex gap-4 mb-4 bg-slate-50 p-4 border border-slate-200 rounded">
+                        <div class="flex-1">
+                            <label class="text-xs font-bold text-slate-500 uppercase block mb-1">Metric X</label>
+                            <select id="corrX" onchange="renderCorrelation()" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-weight:600;"><option value="">Select...</option></select>
+                        </div>
+                        <div class="flex-1">
+                            <label class="text-xs font-bold text-slate-500 uppercase block mb-1">Metric Y</label>
+                            <select id="corrY" onchange="renderCorrelation()" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-weight:600;"><option value="">Select...</option></select>
+                        </div>
+                    </div>
+                    <p class="text-sm font-bold text-slate-800 mb-4" id="txtCorrInsight">Select metrics to calculate.</p>
+                    <div class="chart-box-large"><canvas id="chCorr"></canvas></div>
+                </div>
+            </div>
+
+            
+            <div id="view-whatif" class="tab-content">
+                <div class="card simulator-intro">
+                    <div><div class="eyebrow">Scenario analysis</div><h3>B2P Operational What If</h3><p>Estimate the directional B2P response when <strong>ABS Ácido, ATT or SHKG</strong> changes. The scenario uses the history already loaded in the report and never overwrites Actuals or Targets.</p></div>
+                    <div class="sim-badge">Scenario only · Actuals stay unchanged</div>
+                </div>
+                <div class="card simulator-panel mt-4">
+                    <div class="section-title"><div><h3>KPI → B2P Scenario</h3><p>Historical sensitivity calibrates magnitude; operational KPI direction controls whether B2P can improve or deteriorate.</p></div><span class="stat-pill" id="simConfidence">Confidence —</span></div>
+                    <div class="sim-controls no-print">
+                        <div class="sim-control wide"><label>Client</label><select class="mini-select" id="simClient" onchange="simClientChanged()"><option value="">Select client…</option></select></div>
+                        <div class="sim-control"><label>Country</label><select class="mini-select" id="simCountry" onchange="simCountryChanged()" disabled><option value="">Select scope…</option></select></div>
+                        <div class="sim-control"><label>KPI to simulate</label><select class="mini-select" id="simKPI" onchange="simKPIChanged()" disabled><option value="">Select KPI…</option></select></div>
+                        <div class="sim-control"><label>Current level</label><div class="sim-static" id="simCurrent">—</div></div>
+                        <div class="sim-control"><label>Target</label><div class="sim-static" id="simTarget">—</div></div>
+                        <div class="sim-control"><label>Scenario level</label><div class="sim-input-wrap"><input id="simScenario" type="number" step="0.25" placeholder="—" oninput="renderWhatIf()" disabled><span>%</span></div></div>
+                        <div class="sim-control"><label>History used</label><div class="sim-static" id="simHistory">Select a KPI</div></div>
+                        <div class="sim-control"><label>&nbsp;</label><button class="sim-target-btn" type="button" onclick="simUseTarget()" id="simUseTarget" disabled>USE TARGET</button></div>
+                    </div>
+                    <div class="sim-source-note" id="simSourceNote"><b>Operational logic:</b> ABS Ácido, ATT and SHKG are lower-is-better. The model uses native KPI denominators plus PPH and weighted historical sensitivity.</div>
+                    <div class="sim-kpi-grid" id="simCards"></div>
+                    <div class="sim-grid mt-4">
+                        <div class="card sim-inner-card"><div class="section-title"><div><h3 id="simChartTitle">Historical sensitivity check</h3><p>Each point is one comparable month. The highlighted point is the scenario.</p></div><span class="stat-pill" id="simRelation">r = —</span></div><div class="chart-box-xl"><canvas id="chWhatIf"></canvas></div></div>
+                        <div class="card sim-narrative"><div class="eyebrow">Scenario readout</div><div class="headline" id="simNarrative">Select a client to start</div><div class="detail" id="simNarrativeDetail">Choose the operation you want to test.</div><div class="sim-assumptions" id="simAssumptions"></div></div>
+                    </div>
+                </div>
+                <div class="method-box mt-4"><strong>Important:</strong> this is a decision-support scenario, not a forecast or commitment. Historical association sizes the response but does not prove that changing one KPI causes the modeled B2P movement.</div>
+            </div>
+<div id="view-model" class="tab-content">
+                <div class="card model-hero">
+                    <div class="eyebrow">Reference Guide · Model Governance</div>
+                    <h2>Calculation Model &amp; Glossary</h2>
+                    <p>This page explains how to read the WFM Priority Engine, how KPI performance is weighted, how Revenue-based Hot List/Pareto ranking works, how operational KPI overlap is controlled, how statuses work, and how to interpret the What If simulator. It is a reading guide — not an update procedure.</p>
+                    <div class="model-hero-meta">
+                        <span class="model-hero-chip">Model V7.2</span>
+                        <span class="model-hero-chip">Source: Raw KPIs JH</span>
+                        <span class="model-hero-chip">Entity grain: Country + Client + Month</span>
+                        <span class="model-hero-chip">Revenue materiality: MLOTT Denominador</span>
+                        <span class="model-hero-chip">ABS priority metric: ABS Ácido only</span>
+                        <span class="model-hero-chip">MLOTT + ABS Corregido excluded from priority</span>
+                    </div>
+                </div>
+
+                <div class="model-section">
+                    <div class="model-section-head"><div><h3>How to Read the Engine</h3><p>Recommended sequence for an executive review.</p></div></div>
+                    <div class="read-grid">
+                        <div class="read-step"><span class="num">1</span><h4>Size the issue</h4><p>Start in <strong>Executive Dashboard</strong>. Read status distribution, Top 10 Adverse Revenue Share and the Hot List. Only accounts with at least one adverse risk-eligible KPI enter the Hot List; they are then ranked by Revenue materiality in the selected scope.</p></div>
+                        <div class="read-step"><span class="num">2</span><h4>Find concentration</h4><p>Move to <strong>Portfolio Intelligence</strong>. Use the Revenue Pareto, primary-driver mix and portfolio breakdown to identify where management attention is concentrated.</p></div>
+                        <div class="read-step"><span class="num">3</span><h4>Validate the driver</h4><p>Use <strong>Trends &amp; Drivers</strong> to confirm whether the KPI miss is structural or temporary. Historical KPI evolution uses the KPI's own denominator, not a simple account average.</p></div>
+                        <div class="read-step"><span class="num">4</span><h4>Test the action</h4><p>Use <strong>What If</strong> to estimate the directional B2P response to a change in ABS Ácido, ATT or SHKG. Treat the result as scenario support, not a committed forecast.</p></div>
+                    </div>
+                </div>
+
+                <div class="model-section">
+                    <div class="model-section-head"><div><h3>Calculation Flow</h3><p>From source KPI performance to executive Hot List and Pareto.</p></div></div>
+                    <div class="flow-grid">
+                        <div class="flow-node"><div class="tag">Step 1</div><div class="formula">Weighted Actual &amp; Target</div><div class="desc">Native KPI denominator is used whenever available.</div></div>
+                        <div class="flow-node"><div class="tag">Step 2</div><div class="formula">Adverse Gap</div><div class="desc">Only the unfavorable side of Actual vs Target enters prioritization.</div></div>
+                        <div class="flow-node"><div class="tag">Step 3</div><div class="formula">ΔPPH = Gap × PPH</div><div class="desc">Operational-hours equivalent used to size the deviation.</div></div>
+                        <div class="flow-node"><div class="tag">Step 4</div><div class="formula">Revenue Materiality</div><div class="desc">MLOTT Denominador is used only as the current account revenue weight.</div></div>
+                        <div class="flow-node"><div class="tag">Step 5</div><div class="formula">Adverse Eligibility</div><div class="desc">An account becomes rank-eligible when at least one risk KPI is adverse versus target.</div></div>
+                        <div class="flow-node"><div class="tag">Step 6</div><div class="formula">Operational Driver</div><div class="desc">ΔPPH and correlation help identify the dominant KPI issue; they do not change Revenue rank.</div></div>
+                        <div class="flow-node"><div class="tag">Step 7</div><div class="formula">Revenue Rank, Pareto &amp; Status</div><div class="desc">Adverse accounts are ordered by Revenue; Pareto is cumulative adverse-account Revenue share.</div></div>
+                    </div>
+                </div>
+
+                <div class="model-two-col model-section">
+                    <div class="card">
+                        <div class="model-section-head"><div><h3>KPI Direction &amp; Weighting</h3><p>Business direction and role used by the engine.</p></div></div>
+                        <table class="model-table">
+                            <thead><tr><th>KPI</th><th>Direction</th><th>Weighting / Role</th></tr></thead>
+                            <tbody>
+                                <tr><td><strong>ABS Ácido</strong></td><td><span class="dir-pill dir-low">Lower is better</span></td><td>Native ABS Ácido numerator/denominator. Included in Hot List, Pareto, status and What If.</td></tr>
+                                <tr><td><strong>ABS Corregido</strong></td><td><span class="dir-pill dir-excl">Reference only</span></td><td>Available for historical evolution/correlation; excluded from Hot List, Pareto and status.</td></tr>
+                                <tr><td><strong>SHKG</strong></td><td><span class="dir-pill dir-low">Lower is better</span></td><td>Native SHKG denominator. Included in priority engine and What If.</td></tr>
+                                <tr><td><strong>B2P OPS</strong></td><td><span class="dir-pill dir-high">Higher is better</span></td><td>Native B2P denominator. Included in priority engine and used as the What If output KPI.</td></tr>
+                                <tr><td><strong>ATT</strong></td><td><span class="dir-pill dir-low">Lower is better</span></td><td>Native ATT denominator. Included in priority engine and What If.</td></tr>
+                                <tr><td><strong>GM%</strong></td><td><span class="dir-pill dir-high">Higher is better</span></td><td>Included when Actual and Target are valid; PPH is the controlled fallback weight when no dedicated denominator exists.</td></tr>
+                                <tr><td><strong>MLOTT</strong></td><td><span class="dir-pill dir-excl">Excluded</span></td><td>Not used as a risk KPI. Its denominator is reused only as the Revenue materiality base.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card">
+                        <div class="model-section-head"><div><h3>Core Formulas</h3><p>Exact business logic presented by the report.</p></div></div>
+                        <div class="formula-list">
+                            <div class="formula-row"><div class="name">Weighted performance</div><div class="eq">Actual = Σ Actual Numerator ÷ Σ Actual Denominator<br>Target = Σ Target Numerator ÷ Σ Target Denominator</div><div class="note">If a numerator/pond is absent, the engine reconstructs it as rate × denominator.</div></div>
+                            <div class="formula-row"><div class="name">Adverse KPI gap</div><div class="eq">Lower-is-better: max(Actual − Target, 0)<br>Higher-is-better: max(Target − Actual, 0)</div><div class="note">Only unfavorable deviation contributes to the priority signal.</div></div>
+                            <div class="formula-row"><div class="name">Operational translation</div><div class="eq">ΔPPH = Adverse Rate × PPH</div><div class="note">Makes KPI misses comparable as an operational-hours equivalent.</div></div>
+                            <div class="formula-row"><div class="name">Revenue-based account rank</div><div class="eq">Rank Value = Revenue, only if the account has ≥1 adverse risk KPI<br>Otherwise Rank Value = 0</div><div class="note">KPI severity determines eligibility and action; Revenue determines the order of eligible accounts.</div></div>
+                            <div class="formula-row"><div class="name">Revenue Index &amp; Share</div><div class="eq">Revenue Index = Account Revenue ÷ Highest Revenue among adverse accounts × 100<br>Revenue Share = Account Revenue ÷ Total Revenue of adverse accounts</div><div class="note">Pareto and Hot List use these relative shares; raw Revenue amounts are not displayed.</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-section">
+                    <div class="model-section-head"><div><h3>Overlap Control</h3><p>Used to interpret operational KPI drivers without allowing duplicated KPI signals to distort the driver narrative.</p></div></div>
+                    <div class="dedupe-grid">
+                        <div class="dedupe-card"><div class="title">1 · Eligible KPI set</div><div class="big">ABS Ácido only</div><p>ABS Corregido is excluded from the priority engine, so absence is represented only by ABS Ácido in Hot List, Pareto and status classification.</p></div>
+                        <div class="dedupe-card"><div class="title">2 · Statistical overlap</div><div class="big">r ≥ 0.60 · n ≥ 30</div><p>Pearson correlation is calculated on <strong>adverse KPI gaps</strong> across client-month observations. Positive overlap is considered only when both the correlation and minimum observation thresholds are met. Maximum adjustment is 75%.</p></div>
+                        <div class="dedupe-card"><div class="title">3 · Guardrail</div><div class="big">Largest driver preserved</div><p>The operational driver signal cannot fall below the largest individual adverse driver. Revenue rank and Pareto are not reduced by correlation.</p></div>
+                    </div>
+                    <div class="model-callout" style="margin-top:9px;"><strong>Correlation rule:</strong> adjustment starts at 0% when r = 0.60 and scales progressively to a maximum 75% at r = 1.00 for operational driver sizing only. It does not change Revenue rank or Pareto. Correlation is an overlap indicator, not proof that one KPI causes another.</div>
+                </div>
+
+                <div class="model-section">
+                    <div class="model-section-head"><div><h3>Risk Status &amp; Pareto Rules</h3><p>Statuses are recalculated inside the currently selected portfolio and period.</p></div></div>
+                    <div class="status-grid">
+                        <div class="status-card"><div class="status-name c-crit">Critical Review</div><div class="status-rule">#1 Revenue-ranked adverse account, any adverse account with ≥10% of adverse-account Revenue, or accounts encountered before cumulative adverse Revenue reaches 55%.</div></div>
+                        <div class="status-card"><div class="status-name c-cont">Continuous Review</div><div class="status-rule">Remaining Revenue-ranked adverse accounts encountered before cumulative adverse Revenue reaches 85%.</div></div>
+                        <div class="status-card"><div class="status-name c-rec">Recovery Watch</div><div class="status-rule">Residual adverse account beyond the main Revenue concentration zone, with no worsening driver and at least one improving driver.</div></div>
+                        <div class="status-card"><div class="status-name c-watch">Watchlist</div><div class="status-rule">Residual adverse account outside the main concentration or an adverse account lacking valid Revenue for ranking.</div></div>
+                        <div class="status-card"><div class="status-name c-heal">Healthy</div><div class="status-rule">No adverse risk-eligible KPI deviation in the selected period. Pareto applies only to adverse accounts and follows cumulative Revenue share up to 80%.</div></div>
+                    </div>
+                </div>
+
+                <div class="model-two-col model-section">
+                    <div class="card">
+                        <div class="model-section-head"><div><h3>Advanced Visuals — How to Interpret</h3><p>What each analytical view is designed to answer.</p></div></div>
+                        <table class="model-table">
+                            <thead><tr><th>Visual</th><th>Question it answers</th></tr></thead>
+                            <tbody>
+                                <tr><td><strong>Portfolio Risk Distribution</strong></td><td>How many accounts sit in each management status?</td></tr>
+                                <tr><td><strong>Primary Driver Revenue Mix</strong></td><td>Which primary KPI driver is attached to the largest share of adverse-account Revenue?</td></tr>
+                                <tr><td><strong>Adverse Revenue Share by C-Level</strong></td><td>Where is Revenue from adverse accounts concentrated by executive portfolio?</td></tr>
+                                <tr><td><strong>Revenue Pareto — Adverse Accounts</strong></td><td>Which adverse accounts make up the leading 80% of adverse-account Revenue?</td></tr>
+                                <tr><td><strong>Business Weight vs KPI Severity</strong></td><td>Which accounts combine meaningful KPI miss with high account materiality?</td></tr>
+                                <tr><td><strong>Monthly Adverse Revenue Share</strong></td><td>Is the share of portfolio Revenue sitting in adverse accounts improving or worsening over time?</td></tr>
+                                <tr><td><strong>Portfolio Breakdown Trend</strong></td><td>Which Country, C-Level or Client explains the historical movement?</td></tr>
+                                <tr><td><strong>Historical KPI Evolution</strong></td><td>Is the selected KPI moving toward or away from target using its native denominator?</td></tr>
+                                <tr><td><strong>Adverse-Gap Matrix</strong></td><td>Which KPI deviations move together strongly enough to suggest overlap?</td></tr>
+                                <tr><td><strong>Pearson Scatter</strong></td><td>How strongly do two KPI actual values move together across accounts in the selected period?</td></tr>
+                                <tr><td><strong>What If</strong></td><td>What directional B2P response is indicated when ABS Ácido, ATT or SHKG is changed?</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="card">
+                        <div class="model-section-head"><div><h3>Glossary</h3><p>Core terms used across the report.</p></div></div>
+                        <div class="gloss-grid">
+                            <div class="gloss-card"><div class="term">Adverse Gap</div><div class="def">Only the unfavorable portion of Actual versus Target after considering whether higher or lower is better.</div></div>
+                            <div class="gloss-card"><div class="term">ΔPPH</div><div class="def">Productive-paid-hours equivalent associated with the adverse KPI deviation.</div></div>
+                            <div class="gloss-card"><div class="term">Revenue Materiality</div><div class="def">Account Revenue from MLOTT Denominador used to rank adverse accounts and build Pareto concentration; raw Revenue is not displayed.</div></div>
+                            <div class="gloss-card"><div class="term">Revenue Index</div><div class="def">Relative 0–100 index versus the highest-Revenue adverse account in the current scope.</div></div>
+                            <div class="gloss-card"><div class="term">Revenue Share</div><div class="def">Account Revenue divided by total Revenue across rank-eligible adverse accounts.</div></div>
+                            <div class="gloss-card"><div class="term">Pareto</div><div class="def">Revenue-ranked adverse accounts flagged while cumulative adverse-account Revenue before the account remains below 80%.</div></div>
+                            <div class="gloss-card"><div class="term">Primary Driver</div><div class="def">Largest operational adverse KPI driver based on ΔPPH after overlap controls; it does not determine Revenue rank.</div></div>
+                            <div class="gloss-card"><div class="term">Worsening / Improving</div><div class="def">Direction from the linear trend of the favorable Actual-vs-Target gap over up to the latest 3 available periods.</div></div>
+                            <div class="gloss-card"><div class="term">Correlation r</div><div class="def">Pearson coefficient from −1 to +1. Only qualifying positive adverse-gap correlation can reduce overlapping priority signal.</div></div>
+                            <div class="gloss-card"><div class="term">Top N</div><div class="def">Hot List display control. It changes how many ranked accounts are shown; it does not change the underlying portfolio calculation.</div></div>
+                            <div class="gloss-card"><div class="term">Native Denominator</div><div class="def">KPI-specific denominator used to aggregate Actual and Target correctly instead of taking a simple average across accounts.</div></div>
+                            <div class="gloss-card"><div class="term">Revenue Coverage</div><div class="def">Share of adverse accounts with valid Revenue materiality data. Accounts without valid Revenue remain visible but cannot receive a Revenue rank.</div></div>
+                            <div class="gloss-card"><div class="term">Scenario B2P</div><div class="def">Modeled B2P after changing one What If driver while maintaining the source Actual/Target values untouched.</div></div>
+                            <div class="gloss-card"><div class="term">Historical Sensitivity</div><div class="def">PPH-weighted historical KPI↔B2P regression used to calibrate scenario magnitude; it does not establish causation.</div></div>
+                            <div class="gloss-card"><div class="term">Confidence</div><div class="def">Scenario quality label based on comparable history and consistency of the historical KPI↔B2P relationship.</div></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="model-section">
+                    <div class="model-section-head"><div><h3>What If Method</h3><p>How the B2P scenario should be interpreted.</p></div></div>
+                    <div class="dedupe-grid">
+                        <div class="dedupe-card"><div class="title">1 · Drivers</div><div class="big">ABS A · ATT · SHKG</div><p>Only these operational KPIs can be changed in the simulator. Their lower-is-better direction is enforced so an improvement cannot be modeled as a deterioration.</p></div>
+                        <div class="dedupe-card"><div class="title">2 · Historical calibration</div><div class="big">Up to 18 months</div><p>The selected Client/Country history is used to estimate KPI↔B2P sensitivity. Comparable history and correlation strength determine the confidence level.</p></div>
+                        <div class="dedupe-card"><div class="title">3 · Mathematical consistency</div><div class="big">BH = B2P × PPH</div><p>The scenario keeps B2P, BH and PPH mathematically consistent. It changes scenario assumptions only; source Actuals and Targets are never overwritten.</p></div>
+                    </div>
+                </div>
+
+                <div class="model-callout warning model-section"><strong>Interpretation boundary:</strong> Hot List and Pareto answer a materiality question: among accounts with adverse KPI performance, which ones carry the most Revenue? KPI gaps and ΔPPH explain the operational issue and action. Revenue is used only for relative ranking and Pareto concentration. What If is directional decision support and does not establish causation or replace an operational forecast.</div>
+            </div>
+            
+        </div>
+    </div>
+
+    <!-- Overlay Inicial -->
+    <div id="overlay" style="position:fixed; inset:0; background:#0f172a; z-index:100; display:flex; flex-direction:column; align-items:center; justify-content:center; color:white;">
+        <h2 class="text-3xl font-black mb-2" id="overlayTitle">WFM DECISION ENGINE</h2>
+        <p class="text-sm font-medium text-slate-400 mb-6 max-w-xl text-center" id="overlayDesc">Load the WFM workbook. The dashboard reads the sheet "Raw KPIs JH", keeps Active accounts, and uses each KPI denominator for weighted performance.</p>
+        <label class="btn btn-blue" style="font-size:1rem; padding:0.75rem 2rem;" id="overlayBtn">
+            CARGAR DATOS WFM
+            <input type="file" id="btnOverlayUpload" accept=".xlsx, .xls, .csv" class="hidden" onchange="processFile(event)">
+        </label>
+        <div id="loader" class="hidden mt-6 text-blue-400 font-bold text-sm">Processing Analytical Logic...</div>
+    </div>
+
+<script>
+    // Registro defensivo: si una librería externa falla, el resto de la app sigue operativo.
+    let chartPluginRegistered = false;
+    function ensureChartReady() {
+        if (typeof Chart === 'undefined') return false;
+        if (typeof ChartDataLabels !== 'undefined' && !chartPluginRegistered) {
+            Chart.register(ChartDataLabels);
+            chartPluginRegistered = true;
+        }
+        return true;
+    }
+    ensureChartReady();
+
+    let rawData = [];
+    let clientModels = [];
+    let currentData = [];
+    let portfolioSnapshots = [];
+    let allMonths = [];
+    let activeMonths = [];
+    let kpiList = new Set();
+    let activeMonth = null;
+    let analysisMode = 'OPERATIONAL';
+    let analysisCoverage = { finance:0, volume:0, withRevenue:0, withPPH:0, adverse:0 };
+    let correlationModel = { pairs:{}, kpis:[] };
+    let currentStructuralKeys = new Set();
+
+    const ECONOMIC_COVERAGE_THRESHOLD = 0.90;
+    const CORR_OVERLAP_THRESHOLD = 0.60;
+    const CORR_MIN_OBSERVATIONS = 30;
+    const CORR_MAX_DISCOUNT = 0.75;
+    const LOWER_IS_BETTER = ['ABS', 'ATT', 'SHK', 'SHKG'];
+    const EXCLUDE_FROM_RISK = ['MLOTT','ABS CORREGIDO'];
+    const SOURCE_SHEET_NAME = 'Raw KPIs JH';
+    const SOURCE_ACTIVE_STATUS = 'ACTIVE';
+    const REVENUE_SOURCE_FIELD = 'MLOTT Denominador';
+    // En el archivo fuente el denominador está expresado en miles de EUR (k€).
+    // Se normaliza internamente para mantener una escala consistente; solo se usan shares/índices de Revenue en pantalla.
+    const REVENUE_TO_EUR_MULTIPLIER = 1000;
+
+    const WIDE_KPI_DEFS = [
+        {KPI:'ABS ACIDO', actual:['Abs acido Real'], target:['Abs acido Target'], denom:['Abs Denominador'], pondActual:['Abs Pond Real'], pondTarget:['Abs Pond Target']},
+        {KPI:'ABS CORREGIDO', actual:['Abs corregido Real'], target:['Abs corregido Target'], denom:['Abs corregido Denominador'], pondActual:['Abs corregido  Pond Real','Abs corregido Pond Real'], pondTarget:['Abs corregido  Pond Target','Abs corregido Pond Target']},
+        {KPI:'SHKG', actual:['SHKG Real'], target:['SHKG Target'], denom:['SHKG Denominador'], pondActual:['SHKG Pond Real'], pondTarget:['SHKG Pond Target']},
+        {KPI:'B2P OPS', actual:['B2P Ops Real'], target:['B2P Ops Target'], denom:['B2P Ops Denominador'], pondActual:['B2P Ops Pond Real'], pondTarget:['B2P Ops Pond Target']},
+        {KPI:'ATT', actual:['ATT Real'], target:['ATT  Target','ATT Target'], denom:['ATT Denominador'], pondActual:['ATT Pond Real'], pondTarget:['ATT Pond Target']},
+        {KPI:'MLOTT', actual:['MLOTT Real'], target:['MLOTT Target'], denom:['MLOTT Denominador'], pondActual:['MLOTT Pond Real'], pondTarget:['MLOTT Pond Target']},
+        {KPI:'GM%', actual:['GM%Actual','GM % Actual'], target:['GM%RFT','GM % RFT'], denom:[], pondActual:[], pondTarget:[], pphWeighted:true}
+    ];
+
+    const isFiniteNumber = v => typeof v === 'number' && Number.isFinite(v);
+    const isExcludedKPI = k => EXCLUDE_FROM_RISK.some(x => String(k || '').toUpperCase().includes(x));
+    const isLowerBetter = k => LOWER_IS_BETTER.some(x => String(k || '').toUpperCase().includes(x));
+
+    function parseNumber(value) {
+        if (value === null || value === undefined || value === '') return null;
+        if (typeof value === 'number') return Number.isFinite(value) ? value : null;
+        let s = String(value).trim().replace(/\s/g, '').replace(/[€$£%]/g, '');
+        if (!s) return null;
+        const hasComma = s.includes(','), hasDot = s.includes('.');
+        if (hasComma && hasDot) {
+            if (s.lastIndexOf(',') > s.lastIndexOf('.')) s = s.replace(/\./g, '').replace(',', '.');
+            else s = s.replace(/,/g, '');
+        } else if (hasComma) {
+            const parts = s.split(',');
+            if (parts.length === 2 && parts[1].length <= 3) s = parts[0].replace(/\./g, '') + '.' + parts[1];
+            else s = s.replace(/,/g, '');
+        }
+        s = s.replace(/[^0-9.\-]/g, '');
+        const n = Number(s);
+        return Number.isFinite(n) ? n : null;
+    }
+
+    // Normaliza porcentajes almacenados como 0.08 o 8.0 a una tasa decimal comparable.
+    function toRate(value) {
+        if (!isFiniteNumber(value)) return null;
+        return Math.abs(value) > 2 ? value / 100 : value;
+    }
+
+    function normalizeKPIName(name) {
+        let raw = String(name || '').trim();
+        let upper = raw.toUpperCase();
+        let base = raw.replace(/Target|Real|Meta|Actual/gi, '').trim().toUpperCase();
+        if (upper.includes('GM%') || upper.includes('GM %')) base = 'GM%';
+        return base.replace(/\s+/g, ' ').trim();
+    }
+
+    function formatMoney(v) {
+        if (!isFiniteNumber(v)) return 'N/A';
+        const a = Math.abs(v);
+        if (a >= 1_000_000) return `€${(v/1_000_000).toFixed(2)}M`;
+        if (a >= 1_000) return `€${(v/1_000).toFixed(1)}k`;
+        return `€${v.toFixed(0)}`;
+    }
+
+    function formatNumber(v) {
+        if (!isFiniteNumber(v)) return 'N/A';
+        const a = Math.abs(v);
+        if (a >= 1_000_000) return `${(v/1_000_000).toFixed(2)}M`;
+        if (a >= 1_000) return `${(v/1_000).toFixed(1)}k`;
+        return v.toFixed(a < 10 ? 1 : 0);
+    }
+
+    function formatRateValue(v, digits=1) {
+        const r = toRate(v);
+        return r === null ? 'N/A' : `${(r*100).toFixed(digits)}%`;
+    }
+
+    function formatDeltaPP(v) {
+        if (!isFiniteNumber(v)) return 'N/A';
+        return `${v >= 0 ? '+' : ''}${v.toFixed(1)}pp`;
+    }
+
+
+    function shortKPI(k) {
+        const s=String(k||'');
+        if(s==='ABS ACIDO') return 'ABS A';
+        if(s==='ABS CORREGIDO') return 'ABS C';
+        if(s==='B2P OPS') return 'B2P';
+        return s;
+    }
+
+    function escapeHTML(value) {
+        return String(value ?? '').replace(/[&<>'"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch]));
+    }
+
+    function metricValue(m) {
+        // Revenue-based rank: an account is eligible only when at least one risk KPI is adverse.
+        // KPI severity/ΔPPH drive the operational diagnosis; Revenue alone drives Hot List/Pareto order.
+        return (m && m.AdverseCount>0 && isFiniteNumber(m.Rev) && m.Rev>0) ? m.Rev : 0;
+    }
+
+    function formatAnalysisMetric(v) {
+        return isFiniteNumber(v) ? `${formatNumber(v)} rank units` : 'N/A';
+    }
+
+    function revenueFromRow(row) {
+        // Fuente financiera oficial de este modelo: MLOTT Denominador.
+        // MLOTT sigue excluido del scoring; únicamente reutilizamos su denominador como Revenue Actual.
+        const rawRevenue = parseNumber(row?.[REVENUE_SOURCE_FIELD]);
+        if(rawRevenue === null || rawRevenue <= 0) return null;
+        return rawRevenue * REVENUE_TO_EUR_MULTIPLIER;
+    }
+
+    function pphFromRow(row) {
+        const aliases = ['PPH','Pph','Productive Paid Hours','Paid Productive Hours'];
+        for(const a of aliases) {
+            const n=parseNumber(row?.[a]);
+            if(n !== null) return n;
+        }
+        return null;
+    }
+
+    // Responsive view: auto-detects phones/narrow windows. The header button can override between Mobile and Desktop.
+    let manualViewMode = null; // null = automatic, 'mobile' or 'desktop' = manual override
+    function autoMobileDetected(){
+        return window.innerWidth <= 820 || /Android|iPhone|iPad|iPod|IEMobile|Opera Mini|Mobile/i.test(navigator.userAgent||'');
+    }
+    function resizeDashboardCharts(){
+        if(typeof Chart==='undefined') return;
+        ['chRisk','chDrivers','chCLevel','chWaterfall','chGrossNetKPI','chBubble','chExposureTrend','chTrendBreakdown','chEvol','chCorr','chWhatIf'].forEach(id=>{const ch=Chart.getChart(id);if(ch)ch.resize();});
+    }
+    function isMobileLayout(){
+        return manualViewMode ? manualViewMode==='mobile' : autoMobileDetected();
+    }
+    function applyResponsiveView(){
+        const mobile=isMobileLayout();
+        document.documentElement.classList.toggle('mobile-layout',mobile);
+        const btn=document.getElementById('viewModeBtn');
+        if(btn){
+            btn.textContent=mobile?'DESKTOP VIEW':'MOBILE VIEW';
+            btn.title=mobile?'Cambiar temporalmente a vista escritorio':'Cambiar temporalmente a vista celular';
+        }
+        setTimeout(resizeDashboardCharts,80);
+    }
+    function toggleViewMode(){
+        manualViewMode=isMobileLayout()?'desktop':'mobile';
+        applyResponsiveView();
+    }
+    let responsiveTimer=null;
+    window.addEventListener('resize',()=>{clearTimeout(responsiveTimer);responsiveTimer=setTimeout(()=>{if(manualViewMode===null)applyResponsiveView();},120);});
+
+    // Autocarga del HTML exportado.
+    window.addEventListener('load', function() {
+        applyResponsiveView();
+        if (Array.isArray(window.__EMBEDDED_DATA__) && window.__EMBEDDED_DATA__.length > 0) {
+            const dataSourceControl = document.getElementById('dataSourceControl');
+            const overlayBtn = document.getElementById('overlayBtn');
+            if (dataSourceControl) dataSourceControl.style.display = 'none';
+            if (overlayBtn) overlayBtn.style.display = 'none';
+            document.getElementById('overlayTitle').innerText = 'Loading Dashboard...';
+            document.getElementById('overlayDesc').innerText = 'Reconstructing WFM Priority Models...';
+            setTimeout(() => {
+                rawData = window.__EMBEDDED_DATA__;
+                kpiList = new Set(rawData.map(r => r && r.KPI).filter(Boolean));
+                buildModels(rawData);
+            }, 50);
+        }
+    });
+
+    function switchTab(viewId, btn) {
+        document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('view-' + viewId).classList.add('active');
+
+        // Model & Glossary is a static reference view; data filters do not change its definitions.
+        const filters = document.querySelector('.filters');
+        const banner = document.getElementById('analysisBanner');
+        const referenceMode = viewId === 'model' || viewId === 'whatif';
+        if(filters) filters.style.display = referenceMode ? 'none' : '';
+        if(banner) banner.style.display = referenceMode ? 'none' : '';
+
+        if(viewId === 'econ') renderEconomicIntelligence();
+        if(viewId === 'whatif') renderWhatIfTab();
+        if(viewId === 'evol') {
+            renderExposureTrend();
+            renderTrendBreakdown();
+            renderEvolChart();
+            renderCorrelationMatrix();
+            renderCorrelation();
+        }
+    }
+
+    const MULTI_FILTER_LABELS = {
+        fltMonth:'Latest Available Month', fltCountry:'All Countries', fltCLevel:'All C-Levels',
+        fltClient:'All Clients', fltRisk:'All Statuses', fltKPI:'All KPIs'
+    };
+
+    function getSelectedValues(id) {
+        const el=document.getElementById(id); if(!el) return ['ALL'];
+        const vals=Array.from(el.options).filter(o=>o.selected).map(o=>o.value);
+        return vals.length ? vals : ['ALL'];
+    }
+
+    function selectedSpecificValues(id) {
+        const vals=getSelectedValues(id);
+        return vals.includes('ALL') ? [] : vals;
+    }
+
+    function filterMatches(value, selected) {
+        return !selected || selected.length===0 || selected.includes('ALL') || selected.includes(value);
+    }
+
+    function getFocusKPISelection() {
+        const vals=getSelectedValues('fltKPI');
+        return vals.includes('ALL') ? 'ALL' : vals;
+    }
+
+    function getSnapshotMonths() {
+        const vals=getSelectedValues('fltMonth');
+        if(vals.includes('ALL') || vals.length===0) return allMonths.length ? [allMonths[allMonths.length-1]] : [];
+        return vals.filter(v=>allMonths.includes(v)).sort();
+    }
+
+    function getDisplayMonths() {
+        const vals=getSelectedValues('fltMonth');
+        if(vals.includes('ALL') || vals.length===0) return [...allMonths];
+        return vals.filter(v=>allMonths.includes(v)).sort();
+    }
+
+    function updateMultiLabel(id) {
+        const el=document.getElementById(id), label=document.getElementById(id+'Label'), summary=document.getElementById(id+'Summary');
+        if(!el||!label) return;
+        const opts=Array.from(el.options), selected=opts.filter(o=>o.selected);
+        const all=selected.some(o=>o.value==='ALL') || selected.length===0;
+        if(all) {
+            label.textContent=MULTI_FILTER_LABELS[id] || 'All';
+            if(summary) summary.textContent=id==='fltMonth'?'Snapshot: latest · Trends: full history':'';
+        } else if(selected.length===1) {
+            label.textContent=selected[0].textContent;
+            if(summary) summary.textContent='1 selected';
+        } else {
+            label.textContent=`${selected.length} selected`;
+            if(summary) summary.textContent=selected.slice(0,2).map(o=>o.textContent).join(' · ')+(selected.length>2?` +${selected.length-2}`:'');
+        }
+    }
+
+    function renderMultiMenu(id) {
+        const el=document.getElementById(id), menu=document.getElementById(id+'Menu'); if(!el||!menu)return;
+        menu.innerHTML='';
+        Array.from(el.options).forEach(opt=>{
+            const btn=document.createElement('button'); btn.type='button'; btn.className='multi-option'+(opt.selected?' selected':''); btn.dataset.value=opt.value;
+            const check=document.createElement('span'); check.className='multi-check';
+            const txt=document.createElement('span'); txt.textContent=opt.textContent;
+            btn.appendChild(check); btn.appendChild(txt);
+            btn.addEventListener('click',ev=>{ev.preventDefault();ev.stopPropagation();toggleMultiOption(id,opt.value);});
+            menu.appendChild(btn);
+        });
+        updateMultiLabel(id);
+    }
+
+    function toggleMultiSelect(id, ev) {
+        if(ev) ev.stopPropagation();
+        const root=document.getElementById('ms-'+id); if(!root)return;
+        const willOpen=!root.classList.contains('open');
+        document.querySelectorAll('.multi-select.open').forEach(x=>x.classList.remove('open'));
+        if(willOpen) root.classList.add('open');
+    }
+
+    function toggleMultiOption(id, value) {
+        const el=document.getElementById(id); if(!el)return;
+        const options=Array.from(el.options), clicked=options.find(o=>o.value===value); if(!clicked)return;
+        if(value==='ALL') {
+            options.forEach(o=>o.selected=(o.value==='ALL'));
+        } else {
+            const allOpt=options.find(o=>o.value==='ALL'); if(allOpt) allOpt.selected=false;
+            clicked.selected=!clicked.selected;
+            const specifics=options.filter(o=>o.value!=='ALL'&&o.selected);
+            if(!specifics.length && allOpt) allOpt.selected=true;
+        }
+        renderMultiMenu(id);
+        renderApp();
+    }
+
+    function setFilterSelection(id, values) {
+        const el=document.getElementById(id); if(!el)return;
+        const wanted=new Set(Array.isArray(values)?values:[values]);
+        Array.from(el.options).forEach(o=>o.selected=wanted.has(o.value));
+        if(!Array.from(el.options).some(o=>o.selected)) {
+            const a=Array.from(el.options).find(o=>o.value==='ALL'); if(a)a.selected=true;
+        }
+        renderMultiMenu(id);
+    }
+
+    function resetFilters() {
+        ['fltMonth','fltCountry','fltCLevel','fltClient','fltRisk','fltKPI'].forEach(id=>setFilterSelection(id,'ALL'));
+        renderApp();
+    }
+
+    document.addEventListener('click',()=>document.querySelectorAll('.multi-select.open').forEach(x=>x.classList.remove('open')));
+
+    function normalizeHeaderName(value) {
+        return String(value || '').trim().toUpperCase().replace(/\s+/g,' ');
+    }
+
+    function resolveColumn(headers, aliases) {
+        const index = new Map((headers || []).map(h => [normalizeHeaderName(h), h]));
+        for(const alias of (aliases || [])) {
+            const hit = index.get(normalizeHeaderName(alias));
+            if(hit) return hit;
+        }
+        return null;
+    }
+
+    function processFile(e) {
+        const file = e.target.files[0]; if(!file) return;
+        const loader = document.getElementById('loader');
+        if(loader) loader.classList.remove('hidden');
+        const reader = new FileReader();
+        reader.onload = function(evt) {
+            try {
+                const data = new Uint8Array(evt.target.result);
+                const workbook = XLSX.read(data, {type:'array', cellDates:true});
+                const sheet = workbook.Sheets[SOURCE_SHEET_NAME];
+                if(!sheet) {
+                    const available = workbook.SheetNames.join(', ');
+                    throw new Error(`No se encontró la hoja "${SOURCE_SHEET_NAME}". Hojas disponibles: ${available}`);
+                }
+                const json = XLSX.utils.sheet_to_json(sheet, {defval:null, raw:true});
+                normalizeRawKPIsJH(json);
+            } catch(err) {
+                console.error('Workbook load failed:', err);
+                if(loader) loader.classList.add('hidden');
+                alert('No fue posible cargar el archivo. ' + err.message);
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function standardizeDate(val) {
+        if(!val) return null;
+        if(val instanceof Date) return `${val.getFullYear()}-${String(val.getMonth()+1).padStart(2,'0')}`;
+        let str = String(val).trim();
+        if(typeof val === 'number' && val > 30000) {
+            let d = new Date((val - 25569) * 86400 * 1000);
+            return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}`;
+        }
+        let parsed = new Date(str);
+        if(!isNaN(parsed.getTime())) return `${parsed.getFullYear()}-${String(parsed.getMonth()+1).padStart(2,'0')}`;
+        return str;
+    }
+
+    function normalizeRawKPIsJH(json) {
+        if(!Array.isArray(json) || json.length===0) throw new Error(`La hoja "${SOURCE_SHEET_NAME}" está vacía.`);
+        const headers = Object.keys(json[0] || {});
+        const cols = {
+            month: resolveColumn(headers,['Month']),
+            country: resolveColumn(headers,['Country','País']),
+            status: resolveColumn(headers,['Status']),
+            parent: resolveColumn(headers,['Client Parent']),
+            client: resolveColumn(headers,['Client Name','Client','Cliente']),
+            vp: resolveColumn(headers,['Vp','VP','VP Name']),
+            clevel: resolveColumn(headers,['C-Level','C Level']),
+            pph: resolveColumn(headers,['PPH','Productive Paid Hours','Paid Productive Hours'])
+        };
+        const missing = ['month','country','status','client','pph'].filter(k => !cols[k]);
+        if(missing.length) throw new Error(`La hoja no conserva la estructura esperada. Faltan campos: ${missing.join(', ')}.`);
+
+        const defs = WIDE_KPI_DEFS.map(d => ({
+            ...d,
+            actualCol: resolveColumn(headers,d.actual),
+            targetCol: resolveColumn(headers,d.target),
+            denomCol: resolveColumn(headers,d.denom),
+            pondActualCol: resolveColumn(headers,d.pondActual),
+            pondTargetCol: resolveColumn(headers,d.pondTarget)
+        }));
+
+        kpiList.clear();
+        let flat = [], activeRows = 0;
+        json.forEach(row => {
+            const sourceStatus = String(row[cols.status] ?? '').trim().toUpperCase();
+            if(sourceStatus !== SOURCE_ACTIVE_STATUS) return;
+
+            const month = standardizeDate(row[cols.month]);
+            const country = String(row[cols.country] ?? 'Unknown').trim() || 'Unknown';
+            const client = String(row[cols.client] ?? '').trim();
+            if(!month || !client) return;
+            activeRows++;
+
+            const pph = parseNumber(row[cols.pph]);
+            const rev = revenueFromRow(row);
+            const parent = cols.parent ? String(row[cols.parent] ?? '').trim() : '';
+            const vpName = cols.vp ? String(row[cols.vp] ?? '').trim() : '';
+            const cLevel = cols.clevel ? String(row[cols.clevel] ?? 'Unknown').trim() || 'Unknown' : 'Unknown';
+            const entityKey = `${country}¦${client}`;
+
+            defs.forEach(def => {
+                if(!def.actualCol && !def.targetCol) return;
+                const actual = def.actualCol ? parseNumber(row[def.actualCol]) : null;
+                const target = def.targetCol ? parseNumber(row[def.targetCol]) : null;
+                if(actual === null && target === null) return;
+
+                let denom = def.denomCol ? parseNumber(row[def.denomCol]) : null;
+                let actualNumerator = def.pondActualCol ? parseNumber(row[def.pondActualCol]) : null;
+                let targetNumerator = def.pondTargetCol ? parseNumber(row[def.pondTargetCol]) : null;
+
+                // GM% has no dedicated denominator in this source, so PPH is the controlled fallback weight.
+                if(def.pphWeighted) {
+                    denom = (isFiniteNumber(pph) && pph>0) ? pph : null;
+                    const ar = toRate(actual), tr = toRate(target);
+                    actualNumerator = (ar!==null && denom) ? ar*denom : null;
+                    targetNumerator = (tr!==null && denom) ? tr*denom : null;
+                } else if(isFiniteNumber(denom) && denom>0) {
+                    if(actualNumerator === null && actual !== null) actualNumerator = actual*denom;
+                    if(targetNumerator === null && target !== null) targetNumerator = target*denom;
+                }
+
+                kpiList.add(def.KPI);
+                flat.push({
+                    Month:month, EntityKey:entityKey, Client:client, ClientParent:parent,
+                    Country:country, CLevel:cLevel, VPName:vpName, SourceStatus:'Active',
+                    Rev:rev, PPH:pph, KPI:def.KPI, Actual:actual, Target:target,
+                    WeightActual:(isFiniteNumber(denom)&&denom>0&&actual!==null)?denom:null,
+                    WeightTarget:(isFiniteNumber(denom)&&denom>0&&target!==null)?denom:null,
+                    ActualNumerator:actualNumerator, TargetNumerator:targetNumerator
+                });
+            });
+        });
+
+        if(activeRows===0) throw new Error('No se encontraron cuentas con Status = Active en la hoja Raw KPIs JH.');
+        if(flat.length===0) throw new Error('No se encontraron KPIs válidos en las cuentas activas.');
+        rawData = flat;
+        buildModels(flat);
+    }
+
+    // Construye historia por Country + Client. El desempeño de cada KPI usa su denominador/numerador de Raw KPIs JH.
+    // PPH se reserva para convertir el gap del KPI a ΔPPH; no se usa para ponderar ABS/SHKG/B2P/ATT/MLOTT.
+    function buildModels(data) {
+        kpiList = new Set((data || []).map(r => r && r.KPI).filter(Boolean));
+        let grp = {}, mSet = new Set();
+
+        (data || []).forEach(r => {
+            if(!r || !r.Client || !r.Month || !r.KPI) return;
+            mSet.add(r.Month);
+            const entityKey = r.EntityKey || `${r.Country||'Unknown'}¦${r.Client}`;
+            if(!grp[entityKey]) grp[entityKey] = {EntityKey:entityKey, Name:r.Client, Meta:{}, Ks:{}};
+            let g = grp[entityKey];
+            if(!g.Meta[r.Month]) g.Meta[r.Month] = {
+                PPH:null, Rev:null, Country:r.Country||'Unknown', CLevel:r.CLevel||'Unknown', VPName:r.VPName||'',
+                ClientParent:r.ClientParent||'', SourceStatus:r.SourceStatus||'Active'
+            };
+            let meta = g.Meta[r.Month];
+            if(isFiniteNumber(r.PPH)) meta.PPH = r.PPH;
+            if(isFiniteNumber(r.Rev)) meta.Rev = r.Rev;
+            if(r.Country) meta.Country = r.Country;
+            if(r.CLevel) meta.CLevel = r.CLevel;
+            if(r.VPName) meta.VPName = r.VPName;
+            if(r.ClientParent) meta.ClientParent = r.ClientParent;
+            if(r.SourceStatus) meta.SourceStatus = r.SourceStatus;
+
+            if(!g.Ks[r.KPI]) g.Ks[r.KPI] = {};
+            if(!g.Ks[r.KPI][r.Month]) g.Ks[r.KPI][r.Month] = {sa:0,wa:0,st:0,wt:0,directA:null,directT:null};
+            let d = g.Ks[r.KPI][r.Month];
+
+            if(isFiniteNumber(r.ActualNumerator) && isFiniteNumber(r.WeightActual) && r.WeightActual>0) {
+                d.sa += r.ActualNumerator; d.wa += r.WeightActual;
+            } else if(isFiniteNumber(r.Actual)) d.directA = r.Actual;
+
+            if(isFiniteNumber(r.TargetNumerator) && isFiniteNumber(r.WeightTarget) && r.WeightTarget>0) {
+                d.st += r.TargetNumerator; d.wt += r.WeightTarget;
+            } else if(isFiniteNumber(r.Target)) d.directT = r.Target;
+        });
+
+        allMonths = Array.from(mSet).sort();
+        clientModels = Object.values(grp).map(g => {
+            let model = {EntityKey:g.EntityKey, Name:g.Name, Meta:g.Meta, Ks:{}};
+            Object.keys(g.Ks).forEach(k => {
+                let hist = [];
+                allMonths.forEach(m => {
+                    let d = g.Ks[k][m];
+                    if(!d) return;
+                    let meta = g.Meta[m] || {};
+                    hist.push({
+                        m,
+                        a:d.wa>0 ? d.sa/d.wa : d.directA,
+                        t:d.wt>0 ? d.st/d.wt : d.directT,
+                        aw:d.wa>0 ? d.wa : null,
+                        tw:d.wt>0 ? d.wt : null,
+                        p:(isFiniteNumber(meta.PPH) && meta.PPH>0) ? meta.PPH : null,
+                        rev:isFiniteNumber(meta.Rev) ? meta.Rev : null
+                    });
+                });
+                model.Ks[k] = hist;
+            });
+            let lastM = Object.keys(g.Meta).sort().slice(-1)[0];
+            model.Country = lastM ? g.Meta[lastM].Country : 'Unknown';
+            model.CLevel = lastM ? g.Meta[lastM].CLevel : 'Unknown';
+            model.VPName = lastM ? (g.Meta[lastM].VPName||'') : '';
+            model.ClientParent = lastM ? (g.Meta[lastM].ClientParent||'') : '';
+            model.SourceStatus = lastM ? (g.Meta[lastM].SourceStatus||'Active') : 'Active';
+            model.FilterClient = `${model.Name} | ${model.Country}`;
+            return model;
+        });
+
+        popSel('fltMonth', allMonths, 'Latest Available Month');
+        popSel('fltCountry', [...new Set(clientModels.map(m=>m.Country))].sort(), 'All Countries');
+        popSel('fltCLevel', [...new Set(clientModels.map(m=>m.CLevel))].sort(), 'All C-Levels');
+        popSel('fltClient', [...new Set(clientModels.map(m=>m.FilterClient))].sort(), 'All Clients');
+        renderMultiMenu('fltRisk');
+
+        let dynamicKPIs = Array.from(kpiList).sort();
+        if(dynamicKPIs.length > 0) {
+            popSel('fltKPI', dynamicKPIs.filter(k=>!isExcludedKPI(k)), 'All KPIs');
+            let cx = document.getElementById('corrX'), cy = document.getElementById('corrY'), ek = document.getElementById('evolKPI');
+            cx.innerHTML = '<option value="">Select Metric X</option>';
+            cy.innerHTML = '<option value="">Select Metric Y</option>';
+            if(ek) ek.innerHTML = '';
+            dynamicKPIs.forEach(k => {
+                cx.innerHTML += `<option value="${k}">${k}</option>`;
+                cy.innerHTML += `<option value="${k}">${k}</option>`;
+                if(ek) ek.innerHTML += `<option value="${k}">${k}</option>`;
+            });
+            // Requested defaults: Historical KPI = B2P; Correlation = B2P vs SHKG.
+            if(ek) ek.value = dynamicKPIs.includes('B2P OPS') ? 'B2P OPS' : dynamicKPIs[0];
+            cx.value = dynamicKPIs.includes('B2P OPS') ? 'B2P OPS' : dynamicKPIs[0];
+            cy.value = dynamicKPIs.includes('SHKG') ? 'SHKG' : (dynamicKPIs.find(k => k !== cx.value) || dynamicKPIs[0]);
+        }
+
+        correlationModel = buildCorrelationModel(clientModels);
+        document.getElementById('overlay').classList.add('hidden');
+        document.getElementById('mainDashboard').classList.remove('hidden');
+        const loader=document.getElementById('loader'); if(loader) loader.classList.add('hidden');
+        renderApp();
+    }
+
+    function popSel(id, arr, allTxt) {
+        const el=document.getElementById(id); if(!el)return;
+        const prev=getSelectedValues(id);
+        el.innerHTML='';
+        const allOpt=document.createElement('option'); allOpt.value='ALL'; allOpt.textContent=allTxt; el.appendChild(allOpt);
+        (arr||[]).forEach(v=>{const o=document.createElement('option');o.value=String(v);o.textContent=String(v);el.appendChild(o);});
+        const valid=new Set(Array.from(el.options).map(o=>o.value));
+        const preserved=prev.filter(v=>valid.has(v));
+        const values=preserved.length?preserved:['ALL'];
+        Array.from(el.options).forEach(o=>o.selected=values.includes(o.value));
+        renderMultiMenu(id);
+    }
+
+    function pointAtMonth(hist, month) {
+        return (hist || []).find(d => d.m === month) || null;
+    }
+
+
+    function pairKey(a,b) { return [String(a),String(b)].sort().join('||'); }
+
+    function pearsonFromPairs(pairs) {
+        const v=(pairs||[]).filter(p=>isFiniteNumber(p[0])&&isFiniteNumber(p[1]));
+        const n=v.length; if(n<3) return {r:null,n};
+        let sx=0,sy=0,sxy=0,sx2=0,sy2=0;
+        v.forEach(([x,y])=>{sx+=x;sy+=y;sxy+=x*y;sx2+=x*x;sy2+=y*y;});
+        const den=Math.sqrt((n*sx2-sx*sx)*(n*sy2-sy*sy));
+        return {r:den===0?0:((n*sxy)-(sx*sy))/den,n};
+    }
+
+    function adverseRateFor(model,k,month) {
+        const p=pointAtMonth(model.Ks[k],month);
+        if(!p||!isFiniteNumber(p.a)||!isFiniteNumber(p.t)) return null;
+        const a=toRate(p.a),t=toRate(p.t); if(a===null||t===null) return null;
+        const signed=a-t;
+        return isLowerBetter(k)?Math.max(signed,0):Math.max(-signed,0);
+    }
+
+    function buildCorrelationModel(models, months=allMonths) {
+        const kpis=Array.from(kpiList).filter(k=>!isExcludedKPI(k)).sort();
+        const pairs={};
+        for(let i=0;i<kpis.length;i++) for(let j=i+1;j<kpis.length;j++) {
+            const k1=kpis[i],k2=kpis[j],obs=[];
+            (models||[]).forEach(m=>(months||allMonths).forEach(month=>{
+                const x=adverseRateFor(m,k1,month),y=adverseRateFor(m,k2,month);
+                if(x!==null&&y!==null) obs.push([x,y]);
+            }));
+            pairs[pairKey(k1,k2)]=pearsonFromPairs(obs);
+        }
+        return {pairs,kpis};
+    }
+
+    function correlationBetween(k1,k2,model=correlationModel) {
+        if(k1===k2) return {r:1,n:999999};
+        return model?.pairs?.[pairKey(k1,k2)] || {r:null,n:0};
+    }
+
+    function overlapCorrelation(k1,k2) {
+        const c=correlationBetween(k1,k2);
+        return (c.n>=CORR_MIN_OBSERVATIONS && isFiniteNumber(c.r)) ? Math.max(0,c.r) : 0;
+    }
+
+    function applyNetExposure(impacts) {
+        const adverse=(impacts||[]).filter(x=>x.IsAdverse);
+        adverse.forEach(x=>{x.NetContribution=isFiniteNumber(x.Loss)?x.Loss:null;x.NetDeltaPPH=isFiniteNumber(x.DeltaPPH)?x.DeltaPPH:null;x.OverlapDiscount=0;x.OverlapReason='';});
+        let absRemoved=0, absPPHRemoved=0, corrRemoved=0, corrPPHRemoved=0;
+
+        // Business de-duplication: ABS ACIDO and ABS CORREGIDO represent the same absence phenomenon.
+        const absA=adverse.find(x=>x.KPI==='ABS ACIDO'), absC=adverse.find(x=>x.KPI==='ABS CORREGIDO');
+        if(absA&&absC) {
+            const aBasis=isFiniteNumber(absA.Loss)?absA.Loss:(isFiniteNumber(absA.DeltaPPH)?absA.DeltaPPH:0);
+            const cBasis=isFiniteNumber(absC.Loss)?absC.Loss:(isFiniteNumber(absC.DeltaPPH)?absC.DeltaPPH:0);
+            const drop=aBasis<=cBasis?absA:absC;
+            absRemoved+=isFiniteNumber(drop.Loss)?drop.Loss:0;
+            absPPHRemoved+=isFiniteNumber(drop.DeltaPPH)?drop.DeltaPPH:0;
+            drop.NetContribution=isFiniteNumber(drop.Loss)?0:null;
+            drop.NetDeltaPPH=isFiniteNumber(drop.DeltaPPH)?0:null;
+            drop.OverlapDiscount=1; drop.OverlapReason='ABS duplicate';
+        }
+
+        const candidates=adverse.filter(x=>(isFiniteNumber(x.NetContribution)?x.NetContribution>0:(isFiniteNumber(x.NetDeltaPPH)&&x.NetDeltaPPH>0)))
+            .sort((a,b)=>(b.Loss??b.DeltaPPH??0)-(a.Loss??a.DeltaPPH??0));
+        const accepted=[];
+        candidates.forEach((x,idx)=>{
+            if(idx===0){accepted.push(x);return;}
+            let maxR=0,match=null;
+            accepted.forEach(a=>{const r=overlapCorrelation(x.KPI,a.KPI);if(r>maxR){maxR=r;match=a.KPI;}});
+            if(maxR>=CORR_OVERLAP_THRESHOLD) {
+                const normalized=Math.min(1,Math.max(0,(maxR-CORR_OVERLAP_THRESHOLD)/(1-CORR_OVERLAP_THRESHOLD)));
+                const discount=Math.min(CORR_MAX_DISCOUNT, normalized*CORR_MAX_DISCOUNT);
+                if(discount>0) {
+                    if(isFiniteNumber(x.NetContribution)){const cut=x.NetContribution*discount;x.NetContribution-=cut;corrRemoved+=cut;}
+                    if(isFiniteNumber(x.NetDeltaPPH)){const cut=x.NetDeltaPPH*discount;x.NetDeltaPPH-=cut;corrPPHRemoved+=cut;}
+                    x.OverlapDiscount=discount; x.OverlapReason=`r=${maxR.toFixed(2)} vs ${match}`;
+                }
+            }
+            accepted.push(x);
+        });
+
+        const grossLoss=adverse.filter(x=>isFiniteNumber(x.Loss)).reduce((s,x)=>s+x.Loss,0);
+        const grossPPH=adverse.filter(x=>isFiniteNumber(x.DeltaPPH)).reduce((s,x)=>s+x.DeltaPPH,0);
+        let netLoss=adverse.filter(x=>isFiniteNumber(x.NetContribution)).reduce((s,x)=>s+x.NetContribution,0);
+        let netPPH=adverse.filter(x=>isFiniteNumber(x.NetDeltaPPH)).reduce((s,x)=>s+x.NetDeltaPPH,0);
+        const maxLoss=Math.max(0,...adverse.filter(x=>isFiniteNumber(x.Loss)).map(x=>x.Loss));
+        const maxPPH=Math.max(0,...adverse.filter(x=>isFiniteNumber(x.DeltaPPH)).map(x=>x.DeltaPPH));
+        if(grossLoss>0) netLoss=Math.max(maxLoss,Math.min(grossLoss,netLoss));
+        if(grossPPH>0) netPPH=Math.max(maxPPH,Math.min(grossPPH,netPPH));
+        return {grossLoss:grossLoss||null,netLoss:grossLoss>0?netLoss:null,grossPPH:grossPPH||null,netPPH:grossPPH>0?netPPH:null,absRemoved,corrRemoved,absPPHRemoved,corrPPHRemoved};
+    }
+
+    function getTrendStats(hist, month, kpi) {
+        const usable = (hist || []).filter(d => d.m <= month && isFiniteNumber(d.a) && isFiniteNumber(d.t)).slice(-3);
+        if(usable.length < 2) return {slope:0, projectedGap:null, trend:'Stable'};
+        const y = usable.map(d => {
+            const a = toRate(d.a), t = toRate(d.t);
+            if(a === null || t === null) return 0;
+            return isLowerBetter(kpi) ? (t-a) : (a-t); // positivo = favorable
+        });
+        const n=y.length, x=y.map((_,i)=>i);
+        const sx=x.reduce((a,b)=>a+b,0), sy=y.reduce((a,b)=>a+b,0);
+        const sxy=x.reduce((s,v,i)=>s+v*y[i],0), sx2=x.reduce((s,v)=>s+v*v,0);
+        const slope = n>1 ? (n*sxy-sx*sy)/((n*sx2-sx*sx)||1) : 0;
+        const intercept = (sy-slope*sx)/n;
+        const projectedGap = slope*n + intercept;
+        const eps = 0.001;
+        return {slope, projectedGap, trend:slope < -eps ? 'Worsening' : slope > eps ? 'Improving' : 'Stable'};
+    }
+
+    function createSnapshot(model, month, focusKPI='ALL') {
+        const meta = model.Meta[month];
+        if(!meta) return null;
+        const rawPPH = isFiniteNumber(meta.PPH) ? meta.PPH : null;
+        const pph = (rawPPH !== null && rawPPH>0) ? rawPPH : null;
+        const rev = (isFiniteNumber(meta.Rev) && meta.Rev>0) ? meta.Rev : null;
+        const revPerHour = (pph && rev !== null) ? rev/pph : null;
+        const focusList = Array.isArray(focusKPI) ? focusKPI : [focusKPI];
+        const focusAll = focusList.includes('ALL') || focusList.length===0;
+        const candidates = focusAll
+            ? Object.keys(model.Ks).filter(k => !isExcludedKPI(k))
+            : focusList.filter(k => !isExcludedKPI(k));
+
+        let impacts = [];
+        candidates.forEach(k => {
+            const cur = pointAtMonth(model.Ks[k], month);
+            if(!cur || !isFiniteNumber(cur.a) || !isFiniteNumber(cur.t)) return;
+            const aRate = toRate(cur.a), tRate = toRate(cur.t);
+            if(aRate === null || tRate === null) return;
+            const signedDeltaRate = aRate - tRate;
+            const adverseRate = isLowerBetter(k) ? Math.max(signedDeltaRate, 0) : Math.max(-signedDeltaRate, 0);
+            const deltaPPH = pph !== null ? adverseRate * pph : null;
+            const loss = (deltaPPH !== null && revPerHour !== null) ? Math.max(0, deltaPPH * revPerHour) : null;
+            const trend = getTrendStats(model.Ks[k], month, k);
+            impacts.push({KPI:k,Actual:cur.a,Target:cur.t,DeltaPP:signedDeltaRate*100,AdverseDeltaPP:adverseRate*100,AdverseRate:adverseRate,
+                DeltaPPH:deltaPPH,Loss:loss,Trend:trend.trend,Slope:trend.slope,ProjectedGap:trend.projectedGap,IsAdverse:adverseRate>0.000001,
+                NetContribution:loss,NetDeltaPPH:deltaPPH,OverlapDiscount:0,OverlapReason:''});
+        });
+
+        if(!focusAll) {
+            focusList.filter(k=>isExcludedKPI(k)).forEach(excludedKPI=>{
+                const cur = pointAtMonth(model.Ks[excludedKPI], month);
+                if(cur && isFiniteNumber(cur.a) && isFiniteNumber(cur.t)) impacts.push({KPI:excludedKPI,Actual:cur.a,Target:cur.t,DeltaPP:(toRate(cur.a)-toRate(cur.t))*100,
+                    AdverseDeltaPP:0,AdverseRate:0,DeltaPPH:null,Loss:null,NetContribution:null,NetDeltaPPH:null,Trend:getTrendStats(model.Ks[excludedKPI],month,excludedKPI).trend,
+                    Slope:0,ProjectedGap:null,IsAdverse:false,Excluded:true,OverlapDiscount:0,OverlapReason:''});
+            });
+        }
+
+        const adverse=impacts.filter(x=>x.IsAdverse);
+        const adj=applyNetExposure(impacts);
+        const worseningCount=adverse.filter(x=>x.Trend==='Worsening').length;
+        const improvingCount=adverse.filter(x=>x.Trend==='Improving').length;
+        return {
+            EntityKey:model.EntityKey,FilterClient:model.FilterClient,Name:model.Name,ClientParent:meta.ClientParent||model.ClientParent||'',
+            Country:meta.Country||model.Country,CLevel:meta.CLevel||model.CLevel,VPName:meta.VPName||model.VPName||'',SourceStatus:meta.SourceStatus||model.SourceStatus||'Active',
+            Month:month,Rev:rev,PPH:rawPPH,RevPerHour:revPerHour,Ks:model.Ks,KPIImpacts:impacts,AdverseImpacts:[...adverse],
+            TotalLoss:adj.grossLoss,NetLoss:adj.netLoss,TotalDeltaPPH:adj.grossPPH,NetDeltaPPH:adj.netPPH,
+            ABSOverlapRemoved:adj.absRemoved,CorrOverlapRemoved:adj.corrRemoved,ABSPPHRemoved:adj.absPPHRemoved,CorrPPHRemoved:adj.corrPPHRemoved,
+            AdverseCount:adverse.length,WorseningCount:worseningCount,ImprovingCount:improvingCount,HasPPH:pph!==null,HasRevenue:rev!==null,
+            ExposureRate:(rev&&adj.netLoss!==null)?adj.netLoss/rev:null,Drv:'None',Status:'Healthy',IsPareto:false,ImpactShare:0,CumImpactShare:0,EconomicRank:null,RankValue:0,Act:''
+        };
+    }
+
+    function aggregateSnapshots(model, snaps, months) {
+        if(!snaps || !snaps.length) return null;
+        if(snaps.length===1) return snaps[0];
+        const first=months[0], last=months[months.length-1];
+        const byK={};
+        snaps.forEach(s=>(s.KPIImpacts||[]).forEach(x=>{
+            if(!byK[x.KPI]) byK[x.KPI]={KPI:x.KPI,Loss:0,NetContribution:0,DeltaPPH:0,NetDeltaPPH:0,Excluded:!!x.Excluded,IsAdverse:false,months:0};
+            const a=byK[x.KPI]; a.months++;
+            if(isFiniteNumber(x.Loss))a.Loss+=x.Loss;
+            if(isFiniteNumber(x.NetContribution))a.NetContribution+=x.NetContribution;
+            if(isFiniteNumber(x.DeltaPPH))a.DeltaPPH+=x.DeltaPPH;
+            if(isFiniteNumber(x.NetDeltaPPH))a.NetDeltaPPH+=x.NetDeltaPPH;
+            a.IsAdverse=a.IsAdverse||!!x.IsAdverse;
+        }));
+        Object.values(byK).forEach(a=>{
+            const hist=model.Ks[a.KPI]||[]; let sa=0,wa=0,st=0,wt=0;
+            months.forEach(month=>{const d=pointAtMonth(hist,month);if(!d)return;const ar=toRate(d.a),tr=toRate(d.t),aw=(isFiniteNumber(d.aw)&&d.aw>0)?d.aw:null,tw=(isFiniteNumber(d.tw)&&d.tw>0)?d.tw:null;if(ar!==null&&aw){sa+=ar*aw;wa+=aw;}if(tr!==null&&tw){st+=tr*tw;wt+=tw;}});
+            a.Actual=wa>0?sa/wa:null; a.Target=wt>0?st/wt:null;
+            const ar=toRate(a.Actual),tr=toRate(a.Target); const signed=(ar!==null&&tr!==null)?ar-tr:0;
+            a.DeltaPP=signed*100; a.AdverseRate=(ar===null||tr===null)?0:(isLowerBetter(a.KPI)?Math.max(signed,0):Math.max(-signed,0)); a.AdverseDeltaPP=a.AdverseRate*100;
+            const latest=getTrendStats(hist,last,a.KPI); a.Trend=latest.trend;a.Slope=latest.slope;a.ProjectedGap=latest.projectedGap;
+            a.OverlapDiscount=(a.Loss>0)?Math.max(0,1-(a.NetContribution/a.Loss)):0; a.OverlapReason=a.OverlapDiscount>0?'Aggregated monthly overlap control':'';
+            if(a.Excluded){a.Loss=null;a.NetContribution=null;a.DeltaPPH=null;a.NetDeltaPPH=null;a.IsAdverse=false;}
+        });
+        const impacts=Object.values(byK), adverse=impacts.filter(x=>x.IsAdverse && ((x.NetContribution||0)>0 || (x.NetDeltaPPH||0)>0));
+        const rev=snaps.reduce((t,s)=>t+(s.Rev||0),0), pph=snaps.reduce((t,s)=>t+(isFiniteNumber(s.PPH)?s.PPH:0),0);
+        const totalLoss=snaps.reduce((t,s)=>t+(s.TotalLoss||0),0), netLoss=snaps.reduce((t,s)=>t+(s.NetLoss||0),0);
+        const totalPPH=snaps.reduce((t,s)=>t+(s.TotalDeltaPPH||0),0), netPPH=snaps.reduce((t,s)=>t+(s.NetDeltaPPH||0),0);
+        const absRemoved=snaps.reduce((t,s)=>t+(s.ABSOverlapRemoved||0),0), corrRemoved=snaps.reduce((t,s)=>t+(s.CorrOverlapRemoved||0),0);
+        const absPPH=snaps.reduce((t,s)=>t+(s.ABSPPHRemoved||0),0), corrPPH=snaps.reduce((t,s)=>t+(s.CorrPPHRemoved||0),0);
+        const adverseSnaps=snaps.filter(s=>s.AdverseCount>0);
+        const meta=model.Meta[last]||model.Meta[first]||{};
+        return {
+            EntityKey:model.EntityKey,FilterClient:model.FilterClient,Name:model.Name,ClientParent:meta.ClientParent||model.ClientParent||'',Country:meta.Country||model.Country,CLevel:meta.CLevel||model.CLevel,
+            VPName:meta.VPName||model.VPName||'',SourceStatus:meta.SourceStatus||model.SourceStatus||'Active',Month:`${first} → ${last}`,SelectedMonths:[...months],Rev:rev||null,PPH:pph||null,
+            RevPerHour:(rev>0&&pph>0)?rev/pph:null,Ks:model.Ks,KPIImpacts:impacts,AdverseImpacts:[...adverse],TotalLoss:totalLoss||null,NetLoss:netLoss||null,TotalDeltaPPH:totalPPH||null,NetDeltaPPH:netPPH||null,
+            ABSOverlapRemoved:absRemoved,CorrOverlapRemoved:corrRemoved,ABSPPHRemoved:absPPH,CorrPPHRemoved:corrPPH,AdverseCount:adverse.length,
+            WorseningCount:adverse.filter(x=>x.Trend==='Worsening').length,ImprovingCount:adverse.filter(x=>x.Trend==='Improving').length,
+            HasPPH:adverseSnaps.length?adverseSnaps.every(s=>s.HasPPH):pph>0,HasRevenue:adverseSnaps.length?adverseSnaps.every(s=>s.HasRevenue):rev>0,
+            ExposureRate:(rev>0&&netLoss>0)?netLoss/rev:null,Drv:'None',Status:'Healthy',IsPareto:false,ImpactShare:0,CumImpactShare:0,EconomicRank:null,RankValue:0,Act:''
+        };
+    }
+
+    // Revenue-based priority: KPI gaps determine adverse eligibility; Revenue determines rank/Pareto.
+    function determineAnalysisMode(snaps) {
+        const adverse = snaps.filter(s => s.AdverseCount>0);
+        const withPPH = adverse.filter(s => s.HasPPH);
+        const withRevenue = adverse.filter(s => s.HasRevenue && isFiniteNumber(s.Rev) && s.Rev>0);
+        const finance = adverse.length ? withRevenue.length/adverse.length : 1;
+        const volume = adverse.length ? withPPH.length/adverse.length : 1;
+        analysisCoverage = { finance, volume, withRevenue:withRevenue.length, withPPH:withPPH.length, adverse:adverse.length };
+        analysisMode = 'OPERATIONAL';
+        return analysisMode;
+    }
+
+    function assignEconomicStatuses(snaps) {
+        snaps.forEach(s => {
+            s.Status='Healthy'; s.IsPareto=false; s.ImpactShare=0; s.CumImpactShare=0; s.EconomicRank=null;
+            s.AdverseImpacts.sort((a,b) => {
+                const av = (a.NetDeltaPPH??-1);
+                const bv = (b.NetDeltaPPH??-1);
+                return bv-av || b.AdverseDeltaPP-a.AdverseDeltaPP;
+            });
+            s.Drv = s.AdverseImpacts[0]?.KPI || 'None';
+            s.RankValue = metricValue(s);
+        });
+
+        const positive = snaps.filter(s => s.RankValue > 0).sort((a,b)=>b.RankValue-a.RankValue);
+        const total = positive.reduce((s,x)=>s+x.RankValue,0);
+        let cumulative = 0;
+
+        positive.forEach((s,i) => {
+            const share = total>0 ? s.RankValue/total : 0;
+            const before = cumulative;
+            cumulative += share;
+            s.ImpactShare = share;
+            s.CumImpactShare = cumulative;
+            s.EconomicRank = i+1;
+            s.IsPareto = before < 0.80;
+
+            const recoverySignal = s.AdverseCount>0 && s.WorseningCount===0 && s.ImprovingCount>0;
+            if(i===0 || share >= 0.10 || before < 0.55) s.Status='Critical Review';
+            else if(before < 0.85) s.Status='Continuous Review';
+            else if(recoverySignal) s.Status='Recovery Watch';
+            else s.Status='Watchlist';
+        });
+
+        snaps.filter(s => s.AdverseCount>0 && s.RankValue<=0).forEach(s => s.Status='Watchlist');
+        snaps.forEach(s => s.Act = buildAction(s));
+        return total;
+    }
+
+    function buildDeviationSummary(m, maxItems=3) {
+        const arr = (m.AdverseImpacts || []).slice(0,maxItems);
+        if(!arr.length) return (m.KPIImpacts||[]).some(x=>x.Excluded) ? 'MLOTT excluded' : 'No adverse KPI deviation';
+        return arr.map(x => `${shortKPI(x.KPI)} ${formatDeltaPP(x.DeltaPP)}`).join(' | ');
+    }
+
+    function buildDeviationChips(m, maxItems=3) {
+        const arr=(m.AdverseImpacts||[]).slice(0,maxItems);
+        if(!arr.length) return '<span class="text-xs text-slate-500">No adverse gap</span>';
+        return `<div class="gap-wrap">${arr.map((x,i)=>`<span class="gap-chip ${i===0?'major':''}" title="${escapeHTML(x.KPI)} | Actual ${formatRateValue(x.Actual)} | Target ${formatRateValue(x.Target)}">${escapeHTML(shortKPI(x.KPI))} ${formatDeltaPP(x.DeltaPP)}</span>`).join('')}</div>`;
+    }
+
+    function buildAction(m) {
+        const top=(m.AdverseImpacts||[])[0];
+        if(!top) return 'Maintain monitoring; no adverse risk-eligible KPI deviation is detected in the selected period.';
+        const second=(m.AdverseImpacts||[])[1];
+        const base=(m.AdverseImpacts||[]).reduce((s,x)=>s+(x.NetDeltaPPH||0),0);
+        const topVal=(top.NetDeltaPPH||0);
+        const topShare=base>0?topVal/base:0;
+        const secondTxt=second?` ${shortKPI(second.KPI)} is #2 (${formatDeltaPP(second.DeltaPP)}).`:'';
+        const trend=m.WorseningCount>0?`${m.WorseningCount} worsening driver(s)`:m.ImprovingCount>0?`${m.ImprovingCount} improving driver(s)`:'trend is broadly stable';
+        return `${shortKPI(top.KPI)} drives ${(topShare*100).toFixed(0)}% of the account priority signal (${formatDeltaPP(top.DeltaPP)}).${secondTxt} ${m.AdverseCount} adverse KPI(s); ${trend}. Prioritize recovery of ${shortKPI(top.KPI)} against its target and validate measurable movement next period.`;
+    }
+
+    function kpiCoverageFor(models,month) {
+        const ks=Array.from(kpiList).filter(k=>!isExcludedKPI(k)).sort(), out={};
+        ks.forEach(k=>{let eligible=0,available=0;(models||[]).forEach(m=>{if(!m.Meta[month])return;eligible++;const p=pointAtMonth(m.Ks[k],month);if(p&&isFiniteNumber(p.a)&&isFiniteNumber(p.t))available++;});out[k]={available,eligible,rate:eligible?available/eligible:0};});
+        return out;
+    }
+
+    function totalRevenue(snaps){return (snaps||[]).reduce((s,m)=>s+(isFiniteNumber(m.Rev)&&m.Rev>0?m.Rev:0),0);}
+    function adjustedPriorityTotal(snaps){return (snaps||[]).reduce((s,m)=>s+metricValue(m),0);}
+    function priorityGapIndex(snaps){const rev=totalRevenue(snaps),v=adjustedPriorityTotal(snaps);return rev>0?(v/rev)*100:null;}
+    function priorityScore(m,scope=currentData){const mx=Math.max(0,...((scope||[]).map(x=>metricValue(x))));return mx>0?metricValue(m)/mx*100:0;}
+
+    function renderApp() {
+        const fc=getSelectedValues('fltCountry'),fl=getSelectedValues('fltCLevel'),fn=getSelectedValues('fltClient'),fr=getSelectedValues('fltRisk'),fk=getFocusKPISelection();
+        activeMonths=getSnapshotMonths();
+        activeMonth=activeMonths.length?activeMonths[activeMonths.length-1]:(allMonths.length?allMonths[allMonths.length-1]:null);
+        const structuralModels=clientModels.filter(m=>filterMatches(m.Country,fc)&&filterMatches(m.CLevel,fl)&&filterMatches(m.FilterClient,fn));
+        currentStructuralKeys=new Set(structuralModels.map(m=>m.EntityKey));
+        const allSnaps=structuralModels.map(m=>{
+            const ss=activeMonths.map(month=>createSnapshot(m,month,fk)).filter(Boolean);
+            return aggregateSnapshots(m,ss,activeMonths);
+        }).filter(Boolean);
+        portfolioSnapshots=allSnaps;
+        determineAnalysisMode(portfolioSnapshots);
+        assignEconomicStatuses(portfolioSnapshots);
+        currentData=portfolioSnapshots.filter(m=>filterMatches(m.Status,fr));
+
+        let c={cr:0,co:0,re:0,wa:0,he:0};
+        currentData.forEach(m=>{if(m.Status.includes('Critical'))c.cr++;else if(m.Status.includes('Cont'))c.co++;else if(m.Status.includes('Rec'))c.re++;else if(m.Status.includes('Watch'))c.wa++;else c.he++;});
+        const total=adjustedPriorityTotal(currentData);
+        const sorted=[...currentData].sort((a,b)=>metricValue(b)-metricValue(a));
+        const top10Share=total>0?sorted.slice(0,10).reduce((s,m)=>s+metricValue(m),0)/total:0;
+        document.getElementById('kTotal').innerText=currentData.length;document.getElementById('kCrit').innerText=c.cr;document.getElementById('kCont').innerText=c.co;document.getElementById('kRec').innerText=c.re;document.getElementById('kWatch').innerText=c.wa;document.getElementById('kHeal').innerText=c.he;
+        document.getElementById('kExposureLabel').innerText='Top 10 Adverse Revenue Share';
+        document.getElementById('kRev').innerText=`${(top10Share*100).toFixed(1)}%`;
+        document.getElementById('kExposureSub').innerText='Revenue concentration across adverse accounts';
+
+        const coverageMonths=activeMonths.length?activeMonths:[activeMonth];
+        const coverEntries=coverageMonths.map(month=>kpiCoverageFor(structuralModels,month));
+        const cover={}; Array.from(kpiList).filter(k=>!isExcludedKPI(k)).forEach(k=>{let available=0,eligible=0;coverEntries.forEach(c=>{available+=c[k]?.available||0;eligible+=c[k]?.eligible||0;});cover[k]={available,eligible,rate:eligible?available/eligible:0};});
+        const low=Object.entries(cover).filter(([k,v])=>v.eligible>0&&v.rate<0.70);
+        const banner=document.getElementById('analysisBanner'),pill=document.getElementById('analysisModePill'),txt=document.getElementById('analysisModeText');
+        const revenueWarn=analysisCoverage.finance<ECONOMIC_COVERAGE_THRESHOLD;
+        banner.className=(low.length||revenueWarn)?'analysis-banner warning':'analysis-banner good'; pill.innerText='Revenue-ranked adverse accounts';
+        txt.innerHTML=`Source <strong>${SOURCE_SHEET_NAME}</strong> · Active accounts · KPI Actual vs Target determines <strong>adverse eligibility</strong>; Revenue determines <strong>Hot List and Pareto order</strong> · Revenue coverage <strong>${(analysisCoverage.finance*100).toFixed(0)}%</strong> · ABS Ácido is the only ABS metric included in prioritization.${revenueWarn?' Accounts without valid Revenue remain visible but are not assigned a Revenue rank.':''}${low.length?` KPI coverage warning: ${low.map(([k,v])=>`${shortKPI(k)} ${(v.rate*100).toFixed(0)}%`).join(', ')}.`:''}`;
+
+        document.getElementById('thExposure').innerText='Revenue Index';
+        document.getElementById('lblDriverChart').innerText='Primary Driver Revenue Mix';
+        document.getElementById('capDriverChart').innerText='Share of adverse-account Revenue by #1 KPI driver';
+        document.getElementById('lblCLevelChart').innerText='Adverse Revenue Share by C-Level';
+        document.getElementById('capCLevelChart').innerText='Share of adverse-account Revenue by executive portfolio';
+        document.getElementById('hotlistTitle').innerText='Executive Hot List — Revenue-Ranked Adverse Accounts';
+        const periodLabel=activeMonths.length>1?`${activeMonths[0]} → ${activeMonths[activeMonths.length-1]}`:(activeMonth||'N/A');
+        document.getElementById('hotlistMethod').innerHTML=`Period <strong>${periodLabel}</strong> · Accounts enter the ranking only when at least one eligible KPI is adverse vs Target · rank/Pareto then use <strong>Revenue only</strong> · <strong>MLOTT</strong> and <strong>ABS Corregido</strong> are excluded from risk · ABS Ácido is the absence KPI.`;
+
+        renderCharts(c);renderTable();
+        if(document.getElementById('view-econ').classList.contains('active')) renderEconomicIntelligence();
+        if(document.getElementById('view-evol').classList.contains('active')) {renderExposureTrend();renderTrendBreakdown();renderEvolChart();renderCorrelationMatrix();renderCorrelation();}
+        if(document.getElementById('view-whatif')?.classList.contains('active')) renderWhatIfTab();
+    }
+
+    function renderCharts(c) {
+        if(!ensureChartReady()) return;
+        Chart.getChart('chRisk')?.destroy();
+        new Chart(document.getElementById('chRisk'), {type:'bar',data:{labels:['Critical','Continuous','Recovery','Watchlist','Healthy'],datasets:[{data:[c.cr,c.co,c.re,c.wa,c.he],backgroundColor:['#dc2626','#ea580c','#d97706','#ca8a04','#16a34a'],borderRadius:5,barThickness:18}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,scales:{x:{beginAtZero:true,ticks:{precision:0},grid:{color:'#f1f5f9'}},y:{grid:{display:false}}},plugins:{legend:{display:false},datalabels:{display:true,anchor:'end',align:'right',color:'#475569',font:{weight:'bold',size:10},formatter:v=>v}}}});
+
+        const total=adjustedPriorityTotal(currentData);
+        let dM={}; currentData.forEach(m=>{const v=metricValue(m);if(v>0&&m.Drv&&m.Drv!=='None')dM[m.Drv]=(dM[m.Drv]||0)+v;});
+        const dArr=Object.entries(dM).sort((a,b)=>b[1]-a[1]).slice(0,7);
+        Chart.getChart('chDrivers')?.destroy();
+        new Chart(document.getElementById('chDrivers'),{type:'bar',data:{labels:dArr.length?dArr.map(x=>shortKPI(x[0])):['No priority'],datasets:[{data:dArr.length?dArr.map(x=>total>0?x[1]/total*100:0):[0],backgroundColor:'#2563eb',borderRadius:5,barThickness:18}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,scales:{x:{beginAtZero:true,max:100,grid:{color:'#f1f5f9'},ticks:{callback:v=>v+'%'}},y:{grid:{display:false}}},plugins:{legend:{display:false},datalabels:{display:ctx=>ctx.raw>0,anchor:'end',align:'right',color:'#475569',font:{weight:'bold',size:9},formatter:v=>v.toFixed(1)+'%'},tooltip:{callbacks:{label:ctx=>`${ctx.raw.toFixed(1)}% of adverse-account Revenue`}}}}});
+
+        let cM={};currentData.forEach(m=>{const v=metricValue(m);if(v>0)cM[m.CLevel]=(cM[m.CLevel]||0)+v;});
+        const cArr=Object.entries(cM).sort((a,b)=>b[1]-a[1]).slice(0,8);
+        Chart.getChart('chCLevel')?.destroy();
+        new Chart(document.getElementById('chCLevel'),{type:'bar',data:{labels:cArr.length?cArr.map(x=>x[0]):['No priority'],datasets:[{data:cArr.length?cArr.map(x=>total>0?x[1]/total*100:0):[0],backgroundColor:'#334155',borderRadius:5,barThickness:18}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,scales:{x:{beginAtZero:true,max:100,grid:{color:'#f1f5f9'},ticks:{callback:v=>v+'%'}},y:{grid:{display:false}}},plugins:{legend:{display:false},datalabels:{display:ctx=>ctx.raw>0,anchor:'end',align:'right',color:'#475569',font:{weight:'bold',size:9},formatter:v=>v.toFixed(1)+'%'},tooltip:{callbacks:{label:ctx=>`${ctx.raw.toFixed(1)}% of adverse-account Revenue`}}}}});
+    }
+
+    function renderTable() {
+        let tb=document.getElementById('tbHotlist'); tb.innerHTML='';
+        const sorted=[...currentData].filter(m=>metricValue(m)>0).sort((a,b)=>metricValue(b)-metricValue(a) || (b.TotalDeltaPPH??0)-(a.TotalDeltaPPH??0));
+        const sel=document.getElementById('hotlistTopN'); const rawN=sel?sel.value:'10'; const n=rawN==='ALL'?sorted.length:Math.max(1,parseInt(rawN,10)||10);
+        const top=sorted.slice(0,n), viewTotal=adjustedPriorityTotal(sorted), maxV=Math.max(0,...sorted.map(m=>metricValue(m)));
+        document.getElementById('hotlistCount').innerText=`Top ${top.length} of ${sorted.length}`;
+        top.forEach((m,i)=>{
+            let sC='bg-heal';if(m.Status.includes('Crit'))sC='bg-crit';else if(m.Status.includes('Cont'))sC='bg-cont';else if(m.Status.includes('Rec'))sC='bg-rec';else if(m.Status.includes('Watch'))sC='bg-watch';
+            const score=maxV>0?metricValue(m)/maxV*100:0, share=viewTotal>0?metricValue(m)/viewTotal:0;
+            const period=Array.isArray(m.SelectedMonths)?`${m.SelectedMonths[0]} → ${m.SelectedMonths[m.SelectedMonths.length-1]}`:m.Month;
+            const paretoBadge=m.IsPareto?'<span class="badge bg-pareto">PARETO</span>':'';
+            tb.innerHTML+=`<tr><td data-label="Rank" class="text-center font-black" style="color:#94a3b8;">${i+1}</td><td data-label="Client"><div class="client-title-row"><span class="client-name">${escapeHTML(m.Name)}</span>${paretoBadge}</div><div class="client-meta">${escapeHTML(m.Country)} | ${escapeHTML(m.CLevel)} | ${escapeHTML(period)}</div></td><td data-label="Status" class="text-center"><span class="badge ${sC}">${m.Status}</span></td><td data-label="Revenue Index"><div class="priority-score-wrap"><strong>${score.toFixed(0)}</strong><div class="priority-bar"><span style="width:${Math.max(2,score)}%"></span></div><small>Revenue index</small></div></td><td data-label="Revenue Share" class="text-center font-black">${(share*100).toFixed(1)}%</td><td data-label="KPI Gaps">${buildDeviationChips(m,3)}</td><td data-label="Executive Action" class="action-cell">${escapeHTML(m.Act)}</td></tr>`;
+        });
+        if(!top.length) tb.innerHTML='<tr><td colspan="7" class="text-center font-bold text-slate-400 py-4">No adverse priority accounts in the selected scope.</td></tr>';
+    }
+
+    function viewGross(m){return analysisMode==='ECONOMIC'?(m.TotalLoss||0):(m.TotalDeltaPPH||0);}
+    function viewNet(m){return metricValue(m);}
+    function viewABSRemoved(m){return analysisMode==='ECONOMIC'?(m.ABSOverlapRemoved||0):(m.ABSPPHRemoved||0);}
+    function viewCorrRemoved(m){return analysisMode==='ECONOMIC'?(m.CorrOverlapRemoved||0):(m.CorrPPHRemoved||0);}
+
+    function selectedEntityModels(){const keys=new Set(currentData.map(x=>x.EntityKey));return clientModels.filter(m=>keys.has(m.EntityKey));}
+
+    function snapshotsForMonth(month){
+        const fk=getFocusKPISelection(); const models=selectedEntityModels();
+        return models.map(m=>createSnapshot(m,month,fk)).filter(Boolean);
+    }
+
+    function renderEconomicIntelligence(){
+        if(!ensureChartReady()) return;
+        const total=adjustedPriorityTotal(currentData), rev=totalRevenue(currentData), gapIdx=priorityGapIndex(currentData);
+        const sorted=[...currentData].sort((a,b)=>metricValue(b)-metricValue(a));
+        const top10=total>0?sorted.slice(0,10).reduce((s,m)=>s+metricValue(m),0)/total:0;
+        const pareto=sorted.filter(m=>m.IsPareto&&metricValue(m)>0);
+        const byK={}; currentData.forEach(m=>{const v=metricValue(m);if(v>0&&m.Drv&&m.Drv!=='None')byK[m.Drv]=(byK[m.Drv]||0)+v;});
+        const kSorted=Object.entries(byK).sort((a,b)=>b[1]-a[1]); const driver=kSorted[0];
+        document.getElementById('eNet').innerText=pareto.length;
+        document.getElementById('eNetSub').innerText=`${sorted.filter(m=>metricValue(m)>0).length} accounts with adverse priority`;
+        document.getElementById('eGross').innerText=`${(top10*100).toFixed(1)}%`;
+        document.getElementById('eAvoided').innerText=driver?shortKPI(driver[0]):'—';
+        document.getElementById('eAvoidedSub').innerText=driver&&total>0?`${(driver[1]/total*100).toFixed(1)}% of adverse-account Revenue`:'No adverse KPI driver';
+        document.getElementById('eRate').innerText=gapIdx===null?'—':`${gapIdx.toFixed(1)}%`;
+        document.getElementById('eTop10').innerText=`${(analysisCoverage.finance*100).toFixed(0)}%`;
+        const topAccount=sorted.find(m=>metricValue(m)>0);
+        document.getElementById('insightPortfolio').innerText=topAccount?`${topAccount.Name} is #1 priority`:'No adverse priority';
+        document.getElementById('insightPortfolioDetail').innerText=topAccount&&total>0?`${topAccount.Country} · ${(metricValue(topAccount)/total*100).toFixed(1)}% of adverse-account Revenue.`:'Selected portfolio has no adverse risk-eligible gap.';
+        document.getElementById('insightDriver').innerText=driver?shortKPI(driver[0]):'No adverse driver';
+        document.getElementById('insightDriverDetail').innerText=driver&&total>0?`${(driver[1]/total*100).toFixed(1)}% of adverse-account Revenue is attached to this primary driver.`:'—';
+        document.getElementById('insightQuality').innerText=analysisCoverage.finance>=ECONOMIC_COVERAGE_THRESHOLD?'Coverage ready':'Coverage warning';
+        document.getElementById('insightQualityDetail').innerText=`Revenue rank coverage ${(analysisCoverage.finance*100).toFixed(0)}% across adverse accounts.`;
+
+        // Account Pareto: top accounts as bars + cumulative line
+        const pRows=sorted.filter(m=>metricValue(m)>0).slice(0,20); let cum=0;
+        const shares=pRows.map(m=>total>0?metricValue(m)/total*100:0), cumulative=shares.map(v=>(cum+=v));
+        Chart.getChart('chWaterfall')?.destroy();
+        new Chart(document.getElementById('chWaterfall'),{data:{labels:pRows.map(m=>{const lbl=`${m.Name} (${m.Country})`;return lbl.length>24?lbl.slice(0,23)+'…':lbl;}),datasets:[{type:'bar',label:'Revenue share',data:shares,backgroundColor:'#2563eb',borderRadius:4,yAxisID:'y'},{type:'line',label:'Cumulative Revenue share',data:cumulative,borderColor:'#d97706',backgroundColor:'transparent',borderWidth:2,pointRadius:2,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,title:{display:true,text:'Adverse-account Revenue share'},ticks:{callback:v=>v+'%'},grid:{color:'#f1f5f9'}},y1:{beginAtZero:true,max:100,position:'right',title:{display:true,text:'Cumulative Pareto'},ticks:{callback:v=>v+'%'},grid:{drawOnChartArea:false}},x:{ticks:{maxRotation:45,minRotation:25,font:{size:9}},grid:{display:false}}},plugins:{legend:{position:'top'},datalabels:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.raw.toFixed(1)}%`}}}}});
+
+        // KPI contribution shares
+        const ka=kSorted.slice(0,8);
+        Chart.getChart('chGrossNetKPI')?.destroy();
+        new Chart(document.getElementById('chGrossNetKPI'),{type:'bar',data:{labels:ka.map(x=>shortKPI(x[0])),datasets:[{label:'Adverse Revenue share',data:ka.map(x=>total>0?x[1]/total*100:0),backgroundColor:'#0f766e',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',scales:{x:{beginAtZero:true,max:100,ticks:{callback:v=>v+'%'},grid:{color:'#f1f5f9'}},y:{grid:{display:false}}},plugins:{legend:{display:false},datalabels:{display:true,anchor:'end',align:'right',formatter:v=>v.toFixed(1)+'%',font:{size:9,weight:'bold'},color:'#475569'}}}});
+
+        // Business weight vs severity matrix
+        const totalRev=rev||1;
+        const bubbles=currentData.filter(m=>m.Rev>0&&metricValue(m)>0).map(m=>{const adverse=(m.AdverseImpacts||[]);const sev=adverse.reduce((s,x)=>s+(x.AdverseRate||0),0)*100;return {x:m.Rev/totalRev*100,y:sev,r:Math.max(4,Math.min(18,Math.sqrt(Math.max(0,m.PPH||0))/22)),client:m.Name,country:m.Country,pph:m.PPH,status:m.Status,share:total>0?metricValue(m)/total*100:0};});
+        Chart.getChart('chBubble')?.destroy();
+        new Chart(document.getElementById('chBubble'),{type:'bubble',data:{datasets:[{label:'Accounts',data:bubbles,backgroundColor:'rgba(37,99,235,.32)',borderColor:'#2563eb',borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,scales:{x:{title:{display:true,text:'Business Weight (Revenue Share %)'},ticks:{callback:v=>v+'%'},grid:{color:'#f1f5f9'}},y:{title:{display:true,text:'Combined Adverse KPI Gap (pp)'},ticks:{callback:v=>v.toFixed(1)+'pp'},grid:{color:'#f1f5f9'}}},plugins:{legend:{display:false},datalabels:{display:false},tooltip:{callbacks:{label:ctx=>{const d=ctx.raw;return `${d.client} · ${d.country} | portfolio Revenue share ${d.x.toFixed(1)}% | severity ${d.y.toFixed(1)}pp | adverse Revenue share ${d.share.toFixed(1)}%`;}}}}}});
+        document.getElementById('netMethodBox').innerHTML=`<strong>Priority methodology:</strong> KPI Actual vs Target determines adverse eligibility and the operational driver. Among adverse accounts, Hot List and Pareto are ranked by Revenue only. Correlation overlap is used only for operational driver sizing; it does not change Revenue rank. MLOTT and ABS Corregido remain excluded from risk; ABS Ácido is the absence KPI.`;
+    }
+
+    function renderExposureTrend(){
+        if(!ensureChartReady()) return;
+        const displayMonths=getDisplayMonths(),adverseShare=[];
+        displayMonths.forEach(month=>{const s=snapshotsForMonth(month),rev=totalRevenue(s),adv=s.reduce((a,m)=>a+metricValue(m),0);adverseShare.push(rev>0?adv/rev*100:null);});
+        Chart.getChart('chExposureTrend')?.destroy();
+        new Chart(document.getElementById('chExposureTrend'),{type:'line',data:{labels:displayMonths,datasets:[{label:'Adverse Revenue share',data:adverseShare,borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.08)',borderWidth:3,pointRadius:4,fill:true,tension:.2}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,max:100,title:{display:true,text:'Share of portfolio Revenue'},ticks:{callback:v=>v.toFixed(0)+'%'},grid:{color:'#f1f5f9'}},x:{grid:{display:false}}},plugins:{legend:{position:'top'},datalabels:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.raw===null?'N/A':ctx.raw.toFixed(1)+'%'}`}}}}});
+    }
+
+    function renderTrendBreakdown(){
+        if(!ensureChartReady()) return;
+        const dim=document.getElementById('trendBreakdown')?.value||'CLevel',displayMonths=getDisplayMonths(),monthSnaps={};displayMonths.forEach(m=>monthSnaps[m]=snapshotsForMonth(m));
+        const totals={};Object.values(monthSnaps).flat().forEach(s=>{const key=dim==='Country'?s.Country:(dim==='CLevel'?s.CLevel:s.Name);totals[key]=(totals[key]||0)+viewNet(s);});
+        const top=Object.entries(totals).sort((a,b)=>b[1]-a[1]).slice(0,7).map(x=>x[0]);
+        const palette=['#1d4ed8','#0ea5e9','#0f766e','#7c3aed','#d97706','#475569','#16a34a','#be123c'];
+        const ds=top.map((key,idx)=>({label:key,data:displayMonths.map(m=>{const rev=totalRevenue(monthSnaps[m]);const v=monthSnaps[m].filter(s=>(dim==='Country'?s.Country:(dim==='CLevel'?s.CLevel:s.Name))===key).reduce((a,s)=>a+viewNet(s),0);return rev>0?v/rev*100:0;}),backgroundColor:palette[idx%palette.length],borderRadius:2,stack:'priority'}));
+        const other=displayMonths.map(m=>{const rev=totalRevenue(monthSnaps[m]);const v=monthSnaps[m].filter(s=>!top.includes(dim==='Country'?s.Country:(dim==='CLevel'?s.CLevel:s.Name))).reduce((a,s)=>a+viewNet(s),0);return rev>0?v/rev*100:0;});if(other.some(v=>v>0))ds.push({label:'Other',data:other,backgroundColor:'#cbd5e1',borderRadius:2,stack:'priority'});
+        Chart.getChart('chTrendBreakdown')?.destroy();new Chart(document.getElementById('chTrendBreakdown'),{type:'bar',data:{labels:displayMonths,datasets:ds},options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,title:{display:true,text:'Adverse Revenue share of portfolio'},ticks:{callback:v=>v.toFixed(1)+'%'},grid:{color:'#f1f5f9'}}},plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:9}}},datalabels:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.raw.toFixed(1)}% of portfolio Revenue`}}}}});
+    }
+
+    function renderEvolChart() {
+        const evolSelector=document.getElementById('evolKPI');
+        let fk=evolSelector ? evolSelector.value : 'B2P OPS'; const displayMonths=getDisplayMonths();
+        if(!ensureChartReady()) return;
+        Chart.getChart('chEvol')?.destroy();
+        if(fk==='ALL') return;
+
+        let agg={};
+        currentData.forEach(m => {
+            if(!m.Ks[fk]) return;
+            m.Ks[fk].forEach(d => {
+                if(!displayMonths.includes(d.m)) return;
+                if(!agg[d.m]) agg[d.m]={sa:0,wa:0,st:0,wt:0};
+                const ar=toRate(d.a), tr=toRate(d.t);
+                const aw=(isFiniteNumber(d.aw)&&d.aw>0)?d.aw:null;
+                const tw=(isFiniteNumber(d.tw)&&d.tw>0)?d.tw:null;
+                if(ar!==null && aw){agg[d.m].sa+=ar*aw;agg[d.m].wa+=aw;}
+                if(tr!==null && tw){agg[d.m].st+=tr*tw;agg[d.m].wt+=tw;}
+            });
+        });
+        let lbls=Object.keys(agg).sort();
+        let aD=lbls.map(l=>agg[l].wa>0?(agg[l].sa/agg[l].wa)*100:null);
+        let tD=lbls.map(l=>agg[l].wt>0?(agg[l].st/agg[l].wt)*100:null);
+        let typ=lbls.length===1?'bar':'line';
+        new Chart(document.getElementById('chEvol'), {
+            type:typ,
+            data:{labels:lbls,datasets:[
+                {label:`${fk} Actual (Weighted)`,data:aD,borderColor:'#2563eb',backgroundColor:typ==='bar'?'#2563eb':'rgba(37,99,235,0.1)',borderWidth:3,pointRadius:5,fill:true,datalabels:{align:'top',anchor:'end',offset:4,color:'#1e293b',font:{weight:'bold',size:10},formatter:v=>v===null?'':v.toFixed(1)+'%'}},
+                {label:`${fk} Target (Weighted)`,data:tD,borderColor:'#64748b',borderDash:typ==='line'?[5,5]:[],borderWidth:2,fill:false,datalabels:{display:false}}
+            ]},
+            options:{responsive:true,maintainAspectRatio:false,plugins:{datalabels:{display:true},legend:{position:'top'}},layout:{padding:{top:25}},scales:{y:{ticks:{callback:v=>v+'%'}}}}
+        });
+    }
+
+    function renderCorrelation() {
+        let k1=document.getElementById('corrX').value, k2=document.getElementById('corrY').value;
+        if(!ensureChartReady()) return;
+        Chart.getChart('chCorr')?.destroy();
+        document.getElementById('lblCorrVal').innerText='r = N/A';
+        document.getElementById('txtCorrInsight').innerText='Select two metrics above to calculate correlation.';
+        if(!k1||!k2||k1===k2) return;
+
+        let xy=[]; const corrMonths=getDisplayMonths(), corrModels=selectedEntityModels();
+        corrModels.forEach(m => corrMonths.forEach(month=>{
+            const h1=pointAtMonth(m.Ks[k1],month), h2=pointAtMonth(m.Ks[k2],month);
+            if(h1&&h2&&isFiniteNumber(h1.a)&&isFiniteNumber(h2.a)) {
+                const x=toRate(h1.a), y=toRate(h2.a);
+                if(x!==null&&y!==null) xy.push({x:x*100,y:y*100,client:`${m.Name} · ${month}`});
+            }
+        }));
+        if(xy.length<=2) {
+            document.getElementById('txtCorrInsight').innerText='Not enough paired accounts in the selected period to calculate a reliable Pearson correlation.';
+            return;
+        }
+        let n=xy.length,sx=0,sy=0,sxy=0,sx2=0,sy2=0;
+        xy.forEach(d=>{sx+=d.x;sy+=d.y;sxy+=d.x*d.y;sx2+=d.x*d.x;sy2+=d.y*d.y;});
+        let den=Math.sqrt((n*sx2-sx*sx)*(n*sy2-sy*sy));
+        let r=den===0?0:((n*sxy)-(sx*sy))/den;
+        document.getElementById('lblCorrVal').innerText=`r = ${r.toFixed(2)}`;
+        let strength=Math.abs(r)>0.6?'Strong':(Math.abs(r)>0.3?'Moderate':'Weak');
+        const corrPeriodLabel=corrMonths.length>1?`${corrMonths[0]} → ${corrMonths[corrMonths.length-1]}`:(corrMonths[0]||activeMonth||'selected period');
+        document.getElementById('txtCorrInsight').innerHTML=`${strength} <strong>${r>=0?'positive':'negative'}</strong> correlation between <strong>${k1}</strong> and <strong>${k2}</strong> across ${n} account-period observations for ${corrPeriodLabel}.`;
+        let slope=(n*sxy-sx*sy)/((n*sx2-sx*sx)||1), intercept=(sy-slope*sx)/n;
+        let minX=Math.min(...xy.map(d=>d.x)), maxX=Math.max(...xy.map(d=>d.x));
+        let lineData=[{x:minX,y:slope*minX+intercept},{x:maxX,y:slope*maxX+intercept}];
+        new Chart(document.getElementById('chCorr'), {
+            type:'scatter',
+            data:{datasets:[
+                {label:'Accounts',data:xy,backgroundColor:'rgba(37, 99, 235, 0.6)',borderColor:'#1d4ed8',pointRadius:6,datalabels:{display:false}},
+                {type:'line',label:'Trend',data:lineData,borderColor:'#dc2626',borderWidth:2,borderDash:[5,5],pointRadius:0,fill:false,datalabels:{display:false}}
+            ]},
+            options:{
+                responsive:true,
+                maintainAspectRatio:false,
+                plugins:{tooltip:{callbacks:{label:ctx=>ctx.raw.client?`${ctx.raw.client}: (${ctx.raw.x.toFixed(1)}%, ${ctx.raw.y.toFixed(1)}%)`:''}}},
+                scales:{
+                    x:{
+                        ticks:{callback:v=>v+'%'},
+                        title:{display:true,text:`${shortKPI(k1)} Actual (%)`,color:'#334155',font:{size:12,weight:'700'}}
+                    },
+                    y:{
+                        ticks:{callback:v=>v+'%'},
+                        title:{display:true,text:`${shortKPI(k2)} Actual (%)`,color:'#334155',font:{size:12,weight:'700'}}
+                    }
+                }
+            }
+        });
+    }
+
+    function csvEscape(v) {
+        return `"${String(v??'').replace(/"/g,'""')}"`;
+    }
+
+    // ===== WHAT IF: ABS Ácido / ATT / SHKG -> B2P =====
+    const SIM_KPIS=['ABS ACIDO','ATT','SHKG'];
+    function simPct(v,d=1){return isFiniteNumber(v)?`${(v*100).toFixed(d)}%`:'—';}
+    function simPp(v,d=2){return isFiniteNumber(v)?`${v>=0?'+':''}${(v*100).toFixed(d)}pp`:'—';}
+    function simMedian(arr){const v=(arr||[]).filter(isFiniteNumber).slice().sort((a,b)=>a-b);if(!v.length)return null;const m=Math.floor(v.length/2);return v.length%2?v[m]:(v[m-1]+v[m])/2;}
+    function simClientItems(){const map=new Map();clientModels.forEach(m=>{if(!map.has(m.Name))map.set(m.Name,m.Name);});return [...map.keys()].sort((a,b)=>a.localeCompare(b));}
+    function simModels(client,country){return clientModels.filter(m=>m.Name===client&&(country==='ALL'||m.Country===country));}
+    function simCountryItems(client){return [...new Set(clientModels.filter(m=>m.Name===client).map(m=>m.Country))].sort();}
+    function simWeightedPoint(models,kpi,month){let sa=0,wa=0,st=0,wt=0;models.forEach(m=>{const p=pointAtMonth(m.Ks[kpi],month);if(!p)return;const a=toRate(p.a),t=toRate(p.t);const aw=(isFiniteNumber(p.aw)&&p.aw>0)?p.aw:null,tw=(isFiniteNumber(p.tw)&&p.tw>0)?p.tw:null;if(a!==null){const w=aw||1;sa+=a*w;wa+=w;}if(t!==null){const w=tw||1;st+=t*w;wt+=w;}});return {a:wa>0?sa/wa:null,t:wt>0?st/wt:null,den:wa>0?wa:null};}
+    function simB2PPoint(models,month){let s=0,w=0;models.forEach(m=>{const p=pointAtMonth(m.Ks['B2P OPS'],month);const meta=m.Meta[month];if(!p||!meta)return;const b=toRate(p.a),pph=isFiniteNumber(meta.PPH)&&meta.PPH>0?meta.PPH:null;if(b!==null&&pph){s+=b*pph;w+=pph;}});return w>0?s/w:null;}
+    function simPPH(models,month){return models.reduce((s,m)=>s+((m.Meta[month]&&isFiniteNumber(m.Meta[month].PPH)&&m.Meta[month].PPH>0)?m.Meta[month].PPH:0),0);}
+    function simSeries(client,country,kpi){if(!client||!country||!kpi)return[];const models=simModels(client,country);return allMonths.map(month=>{const kp=simWeightedPoint(models,kpi,month),b=simB2PPoint(models,month),pph=simPPH(models,month);return {m:month,x:kp.a,t:kp.t,den:kp.den,b2p:b,pph};}).filter(x=>x.x!==null&&x.b2p!==null&&x.pph>0&&x.b2p>=0&&x.b2p<=1.5).slice(-18);}
+    function simRegression(rows){const v=(rows||[]).filter(x=>x.pph>0&&isFiniteNumber(x.x)&&isFiniteNumber(x.b2p));if(v.length<3)return null;const sw=v.reduce((s,x)=>s+x.pph,0),mx=v.reduce((s,x)=>s+x.x*x.pph,0)/sw,my=v.reduce((s,x)=>s+x.b2p*x.pph,0)/sw;let cov=0,vx=0,vy=0;v.forEach(p=>{const dx=p.x-mx,dy=p.b2p-my;cov+=p.pph*dx*dy;vx+=p.pph*dx*dx;vy+=p.pph*dy*dy;});if(vx<=0)return null;return {slope:cov/vx,intercept:my-(cov/vx)*mx,r:vy>0?cov/Math.sqrt(vx*vy):null,n:v.length};}
+    function simConfidence(reg){if(!reg||reg.n<6)return {label:'Insufficient',cls:'bad',text:'Not enough comparable history to calibrate sensitivity.'};const ar=Math.abs(reg.r||0);if(reg.n>=10&&ar>=.55)return {label:'High',cls:'good',text:'Historical sensitivity is relatively consistent for this scope.'};if(reg.n>=8&&ar>=.30)return {label:'Medium',cls:'warn',text:'Historical sensitivity is usable, but other drivers still matter.'};return {label:'Low',cls:'bad',text:'Historical sensitivity is weak, so the modeled movement is capped conservatively.'};}
+    function simB2PCap(series){const vals=series.map(x=>x.b2p).filter(isFiniteNumber),med=simMedian(vals);if(med===null)return .02;const mad=simMedian(vals.map(v=>Math.abs(v-med)))||0;return Math.max(.005,Math.min(.08,2*1.4826*mad||.02));}
+    function simCalibration(series){const use=series.slice(-6);let p=0,d=0;use.forEach(x=>{if(x.pph>0&&x.den>0){p+=x.pph;d+=x.den;}});return {pphPerDen:d>0?p/d:null};}
+    function simCard(label,value,sub,cls='info'){return `<div class="sim-kpi ${cls}"><div class="label">${escapeHTML(label)}</div><div class="value">${value}</div><div class="sub">${sub}</div></div>`;}
+    function simSetOptions(id,items,preferred='',placeholder='Select…'){const el=document.getElementById(id);if(!el)return;el.innerHTML=`<option value="">${placeholder}</option>`+items.map(x=>`<option value="${escapeHTML(x)}">${escapeHTML(x)}</option>`).join('');if(items.includes(preferred))el.value=preferred;}
+    function populateWhatIf(){const c=document.getElementById('simClient');if(!c)return;const old=c.value||'';simSetOptions('simClient',simClientItems(),old,'Select client…');simClientChanged(true);}
+    function simClientChanged(preserve=false){const client=document.getElementById('simClient')?.value||'',countryEl=document.getElementById('simCountry'),kpiEl=document.getElementById('simKPI');if(!client){simSetOptions('simCountry',[],'','Select scope…');simSetOptions('simKPI',[],'','Select KPI…');countryEl.disabled=true;kpiEl.disabled=true;document.getElementById('simScenario').disabled=true;renderWhatIf();return;}const oldCountry=preserve?(countryEl.value||'ALL'):'ALL';simSetOptions('simCountry',['ALL',...simCountryItems(client)],oldCountry,'Select scope…');countryEl.querySelector('option[value="ALL"]').textContent='All countries · weighted client';countryEl.value=['ALL',...simCountryItems(client)].includes(oldCountry)?oldCountry:'ALL';countryEl.disabled=false;simCountryChanged(preserve);}
+    function simCountryChanged(preserve=false){const client=document.getElementById('simClient')?.value||'',country=document.getElementById('simCountry')?.value||'',kpiEl=document.getElementById('simKPI');const old=preserve?kpiEl.value:'';const candidates=SIM_KPIS.filter(k=>simSeries(client,country,k).length>=6);simSetOptions('simKPI',candidates,old,'Select KPI…');kpiEl.disabled=!country;document.getElementById('simScenario').disabled=true;document.getElementById('simUseTarget').disabled=true;if(!preserve||!kpiEl.value){document.getElementById('simCurrent').textContent='—';document.getElementById('simTarget').textContent='—';document.getElementById('simHistory').textContent='Select a KPI';}renderWhatIf();}
+    function simKPIChanged(){const client=document.getElementById('simClient')?.value||'',country=document.getElementById('simCountry')?.value||'',kpi=document.getElementById('simKPI')?.value||'',series=simSeries(client,country,kpi),current=series[series.length-1],inp=document.getElementById('simScenario');if(current&&kpi){document.getElementById('simCurrent').textContent=simPct(current.x);document.getElementById('simTarget').textContent=simPct(current.t);document.getElementById('simHistory').textContent=`${series.length} valid months · latest ${current.m}`;inp.disabled=false;inp.value=(current.x*100).toFixed(2);document.getElementById('simUseTarget').disabled=!isFiniteNumber(current.t);}else{inp.disabled=true;inp.value='';document.getElementById('simUseTarget').disabled=true;}renderWhatIf();}
+    function simUseTarget(){const client=document.getElementById('simClient')?.value||'',country=document.getElementById('simCountry')?.value||'',kpi=document.getElementById('simKPI')?.value||'',series=simSeries(client,country,kpi),current=series[series.length-1];if(current&&isFiniteNumber(current.t)){document.getElementById('simScenario').value=(current.t*100).toFixed(2);renderWhatIf();}}
+    function renderWhatIfTab(){populateWhatIf();}
+    function renderWhatIf(){const client=document.getElementById('simClient')?.value||'',country=document.getElementById('simCountry')?.value||'',kpi=document.getElementById('simKPI')?.value||'',confEl=document.getElementById('simConfidence');if(!client||!country||!kpi){if(confEl){confEl.textContent='Confidence —';confEl.className='stat-pill';}document.getElementById('simCards').innerHTML='';document.getElementById('simRelation').textContent='r = —';document.getElementById('simChartTitle').textContent='Historical sensitivity check';document.getElementById('simNarrative').textContent=!client?'Select a client to start':!country?'Select scope':'Select a KPI to simulate';document.getElementById('simNarrativeDetail').textContent='The scenario is independent from source Actuals and Targets.';document.getElementById('simAssumptions').innerHTML='';Chart.getChart('chWhatIf')?.destroy();return;}const series=simSeries(client,country,kpi),current=series[series.length-1],hist=series.slice(0,-1),fit=hist.length>=6?hist:series,reg=simRegression(fit),confidence=simConfidence(reg);confEl.textContent='Confidence '+confidence.label;confEl.className='stat-pill '+confidence.cls;document.getElementById('simRelation').textContent='Historical r = '+(reg&&isFiniteNumber(reg.r)?reg.r.toFixed(2):'—');document.getElementById('simChartTitle').textContent=`${kpi} sensitivity vs B2P`;document.getElementById('simCurrent').textContent=current?simPct(current.x):'—';document.getElementById('simTarget').textContent=current?simPct(current.t):'—';document.getElementById('simHistory').textContent=series.length?`${series.length} valid months · ${country==='ALL'?'weighted client':country}`:'No valid history';const input=Number(document.getElementById('simScenario')?.value);const scenario=Number.isFinite(input)?input/100:null;if(!current||scenario===null){document.getElementById('simCards').innerHTML=current?simCard(`Current ${kpi}`,simPct(current.x),`Observed · ${current.m}`)+simCard('Current B2P',simPct(current.b2p),`PPH ${formatNumber(current.pph)}`):'';document.getElementById('simNarrative').textContent='Enter a scenario value';document.getElementById('simNarrativeDetail').textContent='Scenario can be better or worse than current.';document.getElementById('simAssumptions').innerHTML='';Chart.getChart('chWhatIf')?.destroy();return;}const delta=scenario-current.x,state=delta<0?{name:'improvement',sign:1}:delta>0?{name:'deterioration',sign:-1}:{name:'unchanged',sign:0},cal=simCalibration(series),nativeDelta=-delta*(current.den||0),pphDelta=(cal.pphPerDen!==null)?nativeDelta*cal.pphPerDen:0,scenarioPPH=Math.max(0,current.pph+pphDelta),currentBH=current.b2p*current.pph,histMag=reg?Math.abs(reg.slope*delta):0,robustCap=simB2PCap(series),volumeShare=current.pph>0?Math.abs(pphDelta)/current.pph:0,volumeCap=Math.max(.0025,current.b2p*Math.min(.25,volumeShare)),impactMag=state.sign===0?0:Math.min(Math.max(0,histMag),robustCap,volumeCap),scenarioB2P=Math.max(0,Math.min(1.3,current.b2p+state.sign*impactMag)),b2pDelta=scenarioB2P-current.b2p,scenarioBH=scenarioB2P*scenarioPPH,bhDelta=scenarioBH-currentBH,cls=b2pDelta>0?'good':b2pDelta<0?'warn':'info',oper=state.name==='improvement'?'good':state.name==='deterioration'?'warn':'info';document.getElementById('simCards').innerHTML=simCard(`Current ${kpi}`,simPct(current.x),`Observed · ${current.m}`,'info')+simCard(`Scenario ${kpi}`,simPct(scenario),`${state.name} · ${simPp(delta)}`,oper)+simCard('Current B2P',simPct(current.b2p),`BH ${formatNumber(currentBH)} / PPH ${formatNumber(current.pph)}`,'info')+simCard('Estimated B2P',simPct(scenarioB2P),`Directional scenario`,cls)+simCard('PPH-equivalent change',`${pphDelta>=0?'+':''}${formatNumber(pphDelta)}`,`Scenario PPH ${formatNumber(scenarioPPH)}`,pphDelta>=0?'good':'warn')+simCard('B2P change',simPp(b2pDelta),`BH change ${bhDelta>=0?'+':''}${formatNumber(bhDelta)}`,cls);document.getElementById('simNarrative').innerHTML=`${escapeHTML(kpi)} moves from <b>${simPct(current.x)}</b> to <b>${simPct(scenario)}</b> (${simPp(delta)}). This is treated as an operational <b>${state.name}</b>, so B2P is estimated to move from <b>${simPct(current.b2p)}</b> to <b>${simPct(scenarioB2P)}</b> (${simPp(b2pDelta)}).`;document.getElementById('simNarrativeDetail').textContent=`Current B2P implies ${formatNumber(currentBH)} BH on ${formatNumber(current.pph)} PPH. The KPI movement translates to ${formatNumber(Math.abs(pphDelta))} PPH-equivalent ${pphDelta>=0?'added':'removed'}. Historical r=${reg&&isFiniteNumber(reg.r)?reg.r.toFixed(2):'—'} is used only to size the response. ${confidence.text}`;document.getElementById('simAssumptions').innerHTML=`<div class="sim-assumption"><b>B2P identity:</b> BH = B2P × PPH. Scenario BH and PPH are recomputed consistently.</div><div class="sim-assumption"><b>Capacity translation:</b> ${escapeHTML(kpi)} change × its native current denominator is converted to a PPH-equivalent using the trailing 6-month PPH/denominator relationship.</div><div class="sim-assumption"><b>Direction rule:</b> ABS Ácido, ATT and SHKG are lower-is-better. Deterioration cannot be modeled as a B2P improvement.</div><div class="sim-assumption"><b>Magnitude rule:</b> weighted historical sensitivity sizes the movement, capped by recent B2P volatility and the share of PPH affected.</div>`;
+        if(!ensureChartReady())return;const pts=series.map(x=>({x:x.x*100,y:x.b2p*100,m:x.m,r:5})),sx=scenario*100,sy=scenarioB2P*100,xs=pts.map(p=>p.x).concat([sx]),minX=Math.min(...xs),maxX=Math.max(...xs),datasets=[{type:'bubble',label:'Historical months',data:pts,backgroundColor:'rgba(37,99,235,.45)',borderColor:'#2563eb',borderWidth:1},{type:'bubble',label:'Scenario',data:[{x:sx,y:sy,m:'Scenario',r:9}],backgroundColor:b2pDelta>=0?'rgba(22,163,74,.75)':'rgba(217,119,6,.75)',borderColor:b2pDelta>=0?'#16a34a':'#d97706',borderWidth:2}];if(reg){datasets.splice(1,0,{type:'line',label:'Historical association',data:[{x:minX,y:(reg.intercept+reg.slope*(minX/100))*100},{x:maxX,y:(reg.intercept+reg.slope*(maxX/100))*100}],borderColor:'#64748b',borderDash:[5,5],pointRadius:0,borderWidth:1.5});}Chart.getChart('chWhatIf')?.destroy();new Chart(document.getElementById('chWhatIf'),{data:{datasets},options:{responsive:true,maintainAspectRatio:false,scales:{x:{title:{display:true,text:`${kpi} (%)`,font:{weight:'bold'}},ticks:{callback:v=>v+'%'},grid:{color:'#eef2f7'}},y:{title:{display:true,text:'B2P (%)',font:{weight:'bold'}},ticks:{callback:v=>v+'%'},grid:{color:'#eef2f7'}}},plugins:{legend:{position:'top'},datalabels:{display:false},tooltip:{callbacks:{title:ctx=>ctx[0].raw.m==='Scenario'?'Operational scenario':ctx[0].raw.m,label:ctx=>`${kpi} ${ctx.raw.x.toFixed(1)}% · B2P ${ctx.raw.y.toFixed(1)}%`}}}}});
+    }
+
+    function exportCSV() {
+        if(currentData.length===0) return;
+        const sorted=[...currentData].filter(m=>metricValue(m)>0).sort((a,b)=>metricValue(b)-metricValue(a));const total=adjustedPriorityTotal(sorted),maxV=Math.max(0,...sorted.map(m=>metricValue(m)));
+        const sel=document.getElementById('hotlistTopN');const rawN=sel?sel.value:'10';const n=rawN==='ALL'?sorted.length:Math.max(1,parseInt(rawN,10)||10);const rows=sorted.slice(0,n);
+        let c='Rank,ClientParent,Client,Country,CLevel,RiskStatus,Pareto,RevenueIndex,AdverseRevenueShare,NetDeltaPPH,PrimaryDriver,KPIDeviations,Action\n';
+        rows.forEach((m,i)=>{const score=maxV>0?metricValue(m)/maxV*100:0,share=total>0?metricValue(m)/total:0;const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';c+=[i+1,q(m.ClientParent),q(m.Name),q(m.Country),q(m.CLevel),q(m.Status),m.IsPareto,score.toFixed(1),(share*100).toFixed(2),isFiniteNumber(m.NetDeltaPPH)?m.NetDeltaPPH.toFixed(2):'',q(m.Drv),q(buildDeviationSummary(m,5)),q(m.Act)].join(',')+'\n';});
+        let a=document.createElement('a');a.href=URL.createObjectURL(new Blob([c],{type:'text/csv;charset=utf-8;'}));a.download='WFM_Priority_HotList.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+    }
+
+
+    // SAVE HTML helpers — required to inline Chart.js/DataLabels and safely embed the active dataset.
+    async function fetchLibraryText(url) {
+        const response = await fetch(url, { cache: 'force-cache', mode: 'cors' });
+        if (!response.ok) throw new Error(`HTTP ${response.status} al descargar ${url}`);
+        return await response.text();
+    }
+
+    function escapeInlineScript(code) {
+        return String(code).replace(/<\/script/gi, '<\\/script');
+    }
+
+    function safeJSONStringify(value) {
+        return JSON.stringify(value)
+            .replace(/<\/script/gi, '<\\/script')
+            .replace(/\u2028/g, '\\u2028')
+            .replace(/\u2029/g, '\\u2029');
+    }
+
+    async function exportHTML() {
+        if(rawData.length===0) return alert("Cargue datos primero.");
+
+        const saveBtn = document.querySelector('button[onclick="exportHTML()"]');
+        const oldText = saveBtn ? saveBtn.textContent : '';
+        if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = 'SAVING...'; }
+
+        try {
+            // 1) Clonar el documento. Nunca destruimos los canvas de la sesión actual.
+            const clone = document.documentElement.cloneNode(true);
+            clone.querySelectorAll('.multi-select.open').forEach(x=>x.classList.remove('open'));
+
+            // El botón vivo está temporalmente en SAVING.../disabled. El clon debe conservar controles utilizables.
+            const clonedSaveBtn = clone.querySelector('button[onclick="exportHTML()"]');
+            if (clonedSaveBtn) { clonedSaveBtn.disabled = false; clonedSaveBtn.textContent = 'SAVE HTML'; }
+            const clonedCSVBtn = clone.querySelector('button[onclick="exportCSV()"]');
+            if (clonedCSVBtn) clonedCSVBtn.disabled = false;
+            const clonedPDFBtn = clone.querySelector('button[onclick="window.print()"]');
+            if (clonedPDFBtn) clonedPDFBtn.disabled = false;
+
+            // 2) Limpiar cualquier dataset embebido de una exportación anterior.
+            clone.querySelector('#data-embed')?.remove();
+
+            // 3) Los píxeles de <canvas> no se serializan. Dejamos canvas limpios para que Chart.js los reconstruya al abrir.
+            clone.querySelectorAll('canvas').forEach(canvas => {
+                const fresh = document.createElement('canvas');
+                fresh.id = canvas.id;
+                if (canvas.className) fresh.className = canvas.className;
+                canvas.replaceWith(fresh);
+            });
+
+            // 4) Convertir las librerías de gráficos a INLINE. Esta es la pieza que faltaba en el SAVE HTML original.
+            const chartNode = clone.querySelector('script[data-lib="chartjs"]');
+            const labelsNode = clone.querySelector('script[data-lib="datalabels"]');
+            const liveChartNode = document.querySelector('script[data-lib="chartjs"]');
+            const liveLabelsNode = document.querySelector('script[data-lib="datalabels"]');
+
+            if (!chartNode || !labelsNode || !liveChartNode || !liveLabelsNode) {
+                throw new Error('No se encontraron las dependencias Chart.js/DataLabels.');
+            }
+
+            async function libraryCode(node) {
+                if(node.src) return await fetchLibraryText(node.src);
+                const inline = node.textContent || '';
+                if(inline.trim()) return inline;
+                throw new Error('La librería gráfica no tiene SRC ni código inline disponible.');
+            }
+
+            const [chartCode, labelsCode] = await Promise.all([
+                libraryCode(liveChartNode),
+                libraryCode(liveLabelsNode)
+            ]);
+
+            chartNode.removeAttribute('src');
+            chartNode.setAttribute('data-inline','true');
+            chartNode.textContent = escapeInlineScript(chartCode);
+
+            labelsNode.removeAttribute('src');
+            labelsNode.setAttribute('data-inline','true');
+            labelsNode.textContent = escapeInlineScript(labelsCode);
+
+            // XLSX solo es necesario para cargar un Excel nuevo. El reporte guardado ya lleva sus datos,
+            // por lo que eliminamos esta dependencia remota y evitamos que un fallo de red afecte el arranque.
+            clone.querySelector('script[data-lib="xlsx"]')?.remove();
+
+            // 5) Inyectar los datos ANTES del script principal para que existan desde el primer ciclo de carga.
+            const dataScript = document.createElement('script');
+            dataScript.id = 'data-embed';
+            dataScript.textContent = `window.__EMBEDDED_DATA__ = ${safeJSONStringify(rawData)};`;
+            clone.querySelector('head').appendChild(dataScript);
+
+            // 6) Crear archivo autónomo.
+            const html = '<!DOCTYPE html>\n' + clone.outerHTML;
+            const blob = new Blob([html], {type:'text/html;charset=utf-8'});
+            const a = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            a.href = url;
+            a.download = 'WFM_Controlling_Report_V7_2_Revenue_Priority_Standalone.html';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+        } catch (err) {
+            console.error('SAVE HTML failed:', err);
+            alert('No fue posible crear el HTML autónomo. Verifique conexión a internet al momento de guardar y vuelva a intentar. Detalle: ' + err.message);
+        } finally {
+            if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = oldText || 'SAVE HTML'; }
+        }
+    }
+</script>
+</body></html>
