@@ -2,7 +2,7 @@
 <html lang="es"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CONTROLLING REPORT | WFM Operational Priority Engine V7.4</title>
+    <title>CONTROLLING REPORT | WFM Operational Priority Engine V7.5</title>
     
     <!-- Dependencias CDN para Aplicación Autónoma -->
     <script data-lib="chartjs" data-inline="true">/*!
@@ -541,7 +541,7 @@ window.__EMBEDDED_STATE__ = {"version":"7.4","activeView":"dash","multi":{"fltMo
                     </div>
                     <div class="card">
                         <div class="section-title">
-                            <div><h3>Adverse Revenue Mix by Portfolio Dimension</h3><p>100% stacked composition of Revenue within adverse accounts. Use Breakdown to see how that adverse-account Revenue is distributed across Country, C-Level or Client.</p></div>
+                            <div><h3>Revenue-Weighted KPI Health Mix by Portfolio Dimension</h3><p>Uses the same health logic as the chart on the left. Each colored segment shows that dimension's contribution to portfolio KPI Health; the gray segment is the remaining gap to 100%. Use Breakdown for Country, C-Level or Client.</p></div>
                             <div class="breakdown-controls"><label>Breakdown</label><select id="trendBreakdown" onchange="renderTrendBreakdown()"><option value="Country" selected="selected">Country</option><option value="CLevel">C-Level</option><option value="Client">Client</option></select></div>
                         </div>
                         <div class="chart-box-med"><canvas id="chTrendBreakdown"></canvas></div>
@@ -567,8 +567,8 @@ window.__EMBEDDED_STATE__ = {"version":"7.4","activeView":"dash","multi":{"fltMo
 
                 <div class="card mb-6">
                     <div class="section-title"><div><h3>Adverse-Gap Correlation Matrix</h3><p>Historical Pearson correlation of adverse KPI gaps for the selected portfolio. Used to detect potential double counting.</p></div><span class="badge" id="corrThresholdBadge" style="background:#f1f5f9;color:#334155;border-color:#cbd5e1;">Overlap threshold r ≥ 0.60</span></div>
-                    <div class="corr-wrap" id="corrMatrixWrap"><div class="no-data-card">Awaiting data...</div></div>
-                    <div class="corr-note" id="corrMatrixNote">Correlation is a statistical overlap signal, not proof of causality. The matrix shows risk-eligible KPIs only; MLOTT and ABS Corregido are excluded from priority correlation.</div>
+                    <div class="corr-wrap" id="corrMatrixWrap"><table class="corr-matrix"><thead><tr><th>KPI</th><th>ABS A</th><th>ATT</th><th>B2P</th><th>GM%</th><th>SHKG</th></tr></thead><tbody><tr><th>ABS A</th><td style="background:#e2e8f0;color:#334155;">1.00</td><td style="background:#f1f5f9;color:#475569;" title="Pearson r=0.12 · n=938">0.12</td><td style="background:#f1f5f9;color:#475569;" title="Pearson r=0.11 · n=939">0.11</td><td style="background:#f1f5f9;color:#475569;" title="Pearson r=0.10 · n=778">0.10</td><td style="background:#f1f5f9;color:#475569;" title="Pearson r=-0.01 · n=939">-0.01</td></tr><tr><th>ATT</th><td style="background:#f1f5f9;color:#475569;" title="Pearson r=0.12 · n=938">0.12</td><td style="background:#e2e8f0;color:#334155;">1.00</td><td style="background:#f1f5f9;color:#475569;" title="Pearson r=0.00 · n=938">0.00</td><td style="background:#f1f5f9;color:#475569;" title="Pearson r=0.12 · n=778">0.12</td><td style="background:#f1f5f9;color:#475569;" title="Pearson r=0.02 · n=938">0.02</td></tr><tr><th>B2P</th><td style="background:#f1f5f9;color:#475569;" title="Pearson r=0.11 · n=939">0.11</td><td style="background:#f1f5f9;color:#475569;" title="Pearson r=0.00 · n=938">0.00</td><td style="background:#e2e8f0;color:#334155;">1.00</td><td style="background:#f1f5f9;color:#475569;" title="Pearson r=0.19 · n=780">0.19</td><td style="background:#f1f5f9;color:#475569;" title="Pearson r=0.17 · n=939">0.17</td></tr><tr><th>GM%</th><td style="background:#f1f5f9;color:#475569;" title="Pearson r=0.10 · n=778">0.10</td><td style="background:#f1f5f9;color:#475569;" title="Pearson r=0.12 · n=778">0.12</td><td style="background:#f1f5f9;color:#475569;" title="Pearson r=0.19 · n=780">0.19</td><td style="background:#e2e8f0;color:#334155;">1.00</td><td style="background:#f1f5f9;color:#475569;" title="Pearson r=0.09 · n=778">0.09</td></tr><tr><th>SHKG</th><td style="background:#f1f5f9;color:#475569;" title="Pearson r=-0.01 · n=939">-0.01</td><td style="background:#f1f5f9;color:#475569;" title="Pearson r=0.02 · n=938">0.02</td><td style="background:#f1f5f9;color:#475569;" title="Pearson r=0.17 · n=939">0.17</td><td style="background:#f1f5f9;color:#475569;" title="Pearson r=0.09 · n=778">0.09</td><td style="background:#e2e8f0;color:#334155;">1.00</td></tr></tbody></table></div>
+                    <div class="corr-note" id="corrMatrixNote">Cells outlined in color meet the overlap threshold <strong>|r| ≥ 0.60</strong> with at least <strong>30</strong> paired account-period observations. Correlation is a statistical overlap signal, not proof of causality.</div>
                 </div>
 
                 <div class="card border-t-dark">
@@ -577,7 +577,7 @@ window.__EMBEDDED_STATE__ = {"version":"7.4","activeView":"dash","multi":{"fltMo
                             <h3 class="text-sm font-black uppercase text-slate-800 tracking-wide">CORRELATION ANALYSIS (PEARSON)</h3>
                             <p class="text-xs font-medium text-slate-500 mt-1">Evaluates correlation across accounts.</p>
                         </div>
-                        <span class="badge" style="background:#f1f5f9; color:#334155; border-color:#cbd5e1; font-size:14px; padding:6px 12px;" id="lblCorrVal">r = N/A</span>
+                        <span class="badge" style="background:#f1f5f9; color:#334155; border-color:#cbd5e1; font-size:14px; padding:6px 12px;" id="lblCorrVal">r = -0.46</span>
                     </div>
                     <div class="flex gap-4 mb-4 bg-slate-50 p-4 border border-slate-200 rounded">
                         <div class="flex-1">
@@ -589,7 +589,7 @@ window.__EMBEDDED_STATE__ = {"version":"7.4","activeView":"dash","multi":{"fltMo
                             <select id="corrY" onchange="renderCorrelation()" style="width:100%; padding:6px; border:1px solid #cbd5e1; border-radius:4px; font-weight:600;"><option value="">Select Metric Y</option><option value="ABS ACIDO">ABS ACIDO</option><option value="ABS CORREGIDO">ABS CORREGIDO</option><option value="ATT">ATT</option><option value="B2P OPS">B2P OPS</option><option value="GM%">GM%</option><option value="MLOTT">MLOTT</option><option value="SHKG" selected="selected">SHKG</option></select>
                         </div>
                     </div>
-                    <p class="text-sm font-bold text-slate-800 mb-4" id="txtCorrInsight">Select metrics to calculate.</p>
+                    <p class="text-sm font-bold text-slate-800 mb-4" id="txtCorrInsight">Moderate <strong>negative</strong> correlation between <strong>B2P OPS</strong> and <strong>SHKG</strong> across 939 account-period observations for 2026-01 → 2026-08.</p>
                     <div class="chart-box-large"><canvas id="chCorr"></canvas></div>
                 </div>
             </div>
@@ -720,7 +720,7 @@ window.__EMBEDDED_STATE__ = {"version":"7.4","activeView":"dash","multi":{"fltMo
                                 <tr><td><strong>Revenue Pareto — Adverse Accounts</strong></td><td>Which adverse accounts make up the leading 80% of adverse-account Revenue?</td></tr>
                                 <tr><td><strong>Business Weight vs KPI Severity</strong></td><td>Which accounts combine meaningful KPI miss with high account materiality?</td></tr>
                                 <tr><td><strong>Monthly Revenue-Weighted KPI Health</strong></td><td>How much of KPI performance is on or better than Target after weighting each account by Revenue materiality?</td></tr>
-                                <tr><td><strong>Adverse Revenue Mix Trend</strong></td><td>How is adverse-account Revenue distributed across Country, C-Level or Client each month?</td></tr>
+                                <tr><td><strong>Revenue-Weighted KPI Health Mix</strong></td><td>Which Country, C-Level or Client contributes to portfolio KPI Health each month? Colored segments sum to the portfolio Health shown in the trend chart; gray is the gap to 100%.</td></tr>
                                 <tr><td><strong>Historical KPI Evolution</strong></td><td>Is the selected KPI moving toward or away from target using its native denominator?</td></tr>
                                 <tr><td><strong>Adverse-Gap Matrix</strong></td><td>Which KPI deviations move together strongly enough to suggest overlap?</td></tr>
                                 <tr><td><strong>Pearson Scatter</strong></td><td>How strongly do two KPI actual values move together across accounts in the selected period?</td></tr>
@@ -957,7 +957,7 @@ window.__EMBEDDED_STATE__ = {"version":"7.4","activeView":"dash","multi":{"fltMo
     let responsiveTimer=null;
     window.addEventListener('resize',()=>{clearTimeout(responsiveTimer);responsiveTimer=setTimeout(()=>{if(manualViewMode===null)applyResponsiveView();},120);});
 
-    // ===== V7.4 Standalone state persistence =====
+    // ===== V7.5 Standalone state persistence =====
     // SAVE HTML now stores both the loaded dataset and the current analytical/UI state.
     const STATE_MULTI_FILTERS = ['fltMonth','fltCountry','fltCLevel','fltClient','fltRisk','fltKPI'];
     const STATE_SIMPLE_SELECTS = ['hotlistTopN','trendBreakdown','evolKPI','corrX','corrY'];
@@ -1916,21 +1916,74 @@ window.__EMBEDDED_STATE__ = {"version":"7.4","activeView":"dash","multi":{"fltMo
 
     function renderTrendBreakdown(){
         if(!ensureChartReady()) return;
-        const dim=document.getElementById('trendBreakdown')?.value||'CLevel',displayMonths=getDisplayMonths(),monthSnaps={};
+        const dim=document.getElementById('trendBreakdown')?.value||'CLevel', displayMonths=getDisplayMonths(), monthSnaps={};
         displayMonths.forEach(m=>monthSnaps[m]=snapshotsForMonth(m));
-        const totals={};
-        Object.values(monthSnaps).flat().forEach(s=>{const key=dim==='Country'?s.Country:(dim==='CLevel'?s.CLevel:s.Name);totals[key]=(totals[key]||0)+viewNet(s);});
-        const top=Object.entries(totals).sort((a,b)=>b[1]-a[1]).slice(0,7).map(x=>x[0]);
+        const keyOf=s=>dim==='Country'?s.Country:(dim==='CLevel'?s.CLevel:s.Name);
+
+        // Same logic as Monthly Revenue-Weighted KPI Health:
+        // Account Health = on-target eligible KPIs / valid eligible KPIs.
+        // Portfolio Health = Revenue-weighted average of Account Health.
+        const statsByMonth={};
+        const overallContribution={};
+        displayMonths.forEach(month=>{
+            const groups={}; let portfolioRevenue=0, portfolioHealthyEq=0;
+            (monthSnaps[month]||[]).forEach(s=>{
+                if(!isFiniteNumber(s.Rev) || s.Rev<=0) return;
+                const valid=(s.KPIImpacts||[]).filter(x=>!x.Excluded && isFiniteNumber(x.Actual) && isFiniteNumber(x.Target));
+                if(!valid.length) return;
+                const onTarget=valid.filter(x=>!x.IsAdverse).length;
+                const accountHealth=onTarget/valid.length;
+                const key=keyOf(s)||'Unknown';
+                if(!groups[key]) groups[key]={rev:0,healthyEq:0};
+                groups[key].rev += s.Rev;
+                groups[key].healthyEq += s.Rev*accountHealth;
+                portfolioRevenue += s.Rev;
+                portfolioHealthyEq += s.Rev*accountHealth;
+                overallContribution[key]=(overallContribution[key]||0)+(s.Rev*accountHealth);
+            });
+            statsByMonth[month]={groups,portfolioRevenue,portfolioHealthyEq};
+        });
+
+        const top=Object.entries(overallContribution).sort((a,b)=>b[1]-a[1]).slice(0,7).map(x=>x[0]);
         const palette=['#1d4ed8','#0ea5e9','#0f766e','#7c3aed','#d97706','#475569','#16a34a','#be123c'];
-        const ds=top.map((key,idx)=>({
-            label:key,
-            data:displayMonths.map(m=>{const adverseTotal=adjustedPriorityTotal(monthSnaps[m]);const v=monthSnaps[m].filter(s=>(dim==='Country'?s.Country:(dim==='CLevel'?s.CLevel:s.Name))===key).reduce((a,s)=>a+viewNet(s),0);return adverseTotal>0?v/adverseTotal*100:0;}),
-            backgroundColor:palette[idx%palette.length],borderRadius:2,stack:'priority'
-        }));
-        const other=displayMonths.map(m=>{const adverseTotal=adjustedPriorityTotal(monthSnaps[m]);const v=monthSnaps[m].filter(s=>!top.includes(dim==='Country'?s.Country:(dim==='CLevel'?s.CLevel:s.Name))).reduce((a,s)=>a+viewNet(s),0);return adverseTotal>0?v/adverseTotal*100:0;});
-        if(other.some(v=>v>0))ds.push({label:'Other',data:other,backgroundColor:'#cbd5e1',borderRadius:2,stack:'priority'});
+        const datasets=top.map((key,idx)=>{
+            const contributions=[], groupHealth=[];
+            displayMonths.forEach(month=>{
+                const st=statsByMonth[month], g=st.groups[key]||{rev:0,healthyEq:0};
+                contributions.push(st.portfolioRevenue>0 ? g.healthyEq/st.portfolioRevenue*100 : 0);
+                groupHealth.push(g.rev>0 ? g.healthyEq/g.rev*100 : null);
+            });
+            return {label:key,data:contributions,_groupHealth:groupHealth,backgroundColor:palette[idx%palette.length],borderRadius:2,stack:'health'};
+        });
+
+        const otherData=[], otherHealth=[];
+        displayMonths.forEach(month=>{
+            const st=statsByMonth[month]; let rev=0,healthyEq=0;
+            Object.entries(st.groups).forEach(([key,g])=>{if(!top.includes(key)){rev+=g.rev;healthyEq+=g.healthyEq;}});
+            otherData.push(st.portfolioRevenue>0 ? healthyEq/st.portfolioRevenue*100 : 0);
+            otherHealth.push(rev>0 ? healthyEq/rev*100 : null);
+        });
+        if(otherData.some(v=>v>0)) datasets.push({label:'Other',data:otherData,_groupHealth:otherHealth,backgroundColor:'#94a3b8',borderRadius:2,stack:'health'});
+
+        const gap=displayMonths.map(month=>{
+            const st=statsByMonth[month];
+            const health=st.portfolioRevenue>0 ? st.portfolioHealthyEq/st.portfolioRevenue*100 : 0;
+            return Math.max(0,100-health);
+        });
+        datasets.push({label:'Gap to 100%',data:gap,_isGap:true,backgroundColor:'#e2e8f0',borderColor:'#cbd5e1',borderWidth:1,borderRadius:2,stack:'health'});
+
         Chart.getChart('chTrendBreakdown')?.destroy();
-        new Chart(document.getElementById('chTrendBreakdown'),{type:'bar',data:{labels:displayMonths,datasets:ds},options:{responsive:true,maintainAspectRatio:false,scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,max:100,title:{display:true,text:'Share of adverse-account Revenue'},ticks:{callback:v=>v.toFixed(0)+'%'},grid:{color:'#f1f5f9'}}},plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:9}}},datalabels:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.raw.toFixed(1)}% of adverse-account Revenue`}}}}});
+        new Chart(document.getElementById('chTrendBreakdown'),{
+            type:'bar',data:{labels:displayMonths,datasets},
+            options:{responsive:true,maintainAspectRatio:false,
+                scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,max:100,title:{display:true,text:'Contribution to portfolio KPI Health'},ticks:{callback:v=>v.toFixed(0)+'%'},grid:{color:'#f1f5f9'}}},
+                plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:9}}},datalabels:{display:false},tooltip:{callbacks:{label:ctx=>{
+                    if(ctx.dataset._isGap) return `Gap to full target: ${ctx.raw.toFixed(1)} pp`;
+                    const gh=ctx.dataset._groupHealth?.[ctx.dataIndex];
+                    return `${ctx.dataset.label}: ${ctx.raw.toFixed(1)} pp contribution${gh!==null&&gh!==undefined?` · group KPI Health ${gh.toFixed(1)}%`:''}`;
+                }}}}
+            }
+        });
     }
 
     function renderEvolChart() {
@@ -2201,7 +2254,7 @@ window.__EMBEDDED_STATE__ = {"version":"7.4","activeView":"dash","multi":{"fltMo
             const a = document.createElement('a');
             const url = URL.createObjectURL(blob);
             a.href = url;
-            a.download = 'WFM_Controlling_Report_V7_4_Standalone_With_Data.html';
+            a.download = 'WFM_Controlling_Report_V7_5_Standalone_With_Data.html';
             document.body.appendChild(a);
             a.click();
             a.remove();
