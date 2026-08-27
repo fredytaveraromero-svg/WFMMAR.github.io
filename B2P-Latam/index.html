@@ -4013,14 +4013,14 @@ select[multiple]{min-height:88px}
     <div class="navbar-brand brand d-flex align-items-center gap-2">
       <i class="fa-solid fa-chart-line" style="color:#55d9ef"></i>
       <span>WFM B2P <span class="accent">Enterprise Portal</span></span>
-      <span class="badge version">v14.0 Audited Final</span>
+      <span class="badge version">v14.1 Audited Final</span>
     </div>
     <div class="toolbar">
       <span id="sourceLabel" class="text-white-50 small d-none d-xl-inline">B2P Latam.xlsx · 459 accounts · Sheet1</span>
-      <input id="fileUpload" class="d-none" type="file" accept=".xlsx,.xls,.csv">
-      <button class="btn btn-outline-info btn-sm btn-app" onclick="document.getElementById('fileUpload').click()"><i class="fa-solid fa-file-arrow-up me-1"></i>Cargar Excel</button>
+      
+      
       <button class="btn btn-outline-light btn-sm btn-app" onclick="exportDetail()"><i class="fa-solid fa-file-excel me-1"></i>Exportar</button>
-      <button class="btn btn-success btn-sm btn-app" onclick="savePortableHTML()"><i class="fa-solid fa-share-nodes me-1"></i>Guardar HTML</button>
+      
       <button class="btn btn-outline-light btn-sm btn-app" onclick="toggleTheme()" title="Tema"><i id="themeIcon" class="fa-solid fa-moon"></i></button>
     </div>
   </div>
@@ -4734,7 +4734,8 @@ function findWorkbookAOA(wb){
   }
   throw new Error("No encontré una hoja con estructura Country / Client.");
 }
-document.getElementById("fileUpload").addEventListener("change",e=>{
+const fileUploadControl=document.getElementById("fileUpload");
+if(fileUploadControl) fileUploadControl.addEventListener("change",e=>{
   const file=e.target.files[0];if(!file)return;
   showLoader(true,"Leyendo workbook y reconstruyendo el modelo mensual...");
   const ext=(file.name.split(".").pop()||"").toLowerCase(),reader=new FileReader();
@@ -4769,6 +4770,12 @@ function exportDetail(){
 }
 function buildPortableHTML(){
   const clone=document.documentElement.cloneNode(true);
+  // Shared/portable report: remove source-replacement controls.
+  // The master HTML keeps them; only the generated report is locked to its embedded data.
+  const uploadInput=clone.querySelector("#fileUpload");if(uploadInput)uploadInput.remove();
+  clone.querySelectorAll('button[onclick*="fileUpload"]').forEach(el=>el.remove());
+  // Consumption copy must not expose the HTML download/save action.
+  clone.querySelectorAll('button[onclick*="savePortableHTML"]').forEach(el=>el.remove());
   const charts=["chartCountryB2P","chartCountryImpact","chartRisk","chartTopAccounts","chartWaterfall","chartScatter","chartTrendB2P","chartTrendHours","chartTrendImpact","chartTrendCPH"];
   charts.forEach(id=>{const el=clone.querySelector(`#${id}`);if(el){el.innerHTML="";el.className=el.className.replace(/\bjs-plotly-plot\b/g,"").trim()}});
   ["financeBody","actionBody","dataBody","qualityBox","filterSummary","accountRefs","filterRegionOptions","filterCountryOptions","filterStatusOptions","filterMonthOptions","filterClientOptions"].forEach(id=>{const el=clone.querySelector(`#${id}`);if(el)el.innerHTML=""});
