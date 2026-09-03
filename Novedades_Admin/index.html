@@ -1,1 +1,529 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WFM Payroll Analytics Pro | Colombia</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+  <style>
+    :root {
+      --bg:#f4f7fb; --panel:#ffffff; --text:#172033; --muted:#667085; --line:#e5eaf2;
+      --navy:#10233f; --navy2:#17385f; --blue:#2563eb; --cyan:#0891b2; --green:#059669;
+      --amber:#d97706; --red:#dc2626; --purple:#7c3aed; --slate:#475569; --shadow:0 10px 28px rgba(16,35,63,.08);
+    }
+    *{box-sizing:border-box} body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--text)}
+    button,input,select{font:inherit} button{cursor:pointer}
+    .app{min-height:100vh}.header{position:sticky;top:0;z-index:50;background:linear-gradient(115deg,var(--navy),var(--navy2));color:white;box-shadow:0 4px 18px rgba(16,35,63,.22)}
+    .header-inner{max-width:1720px;margin:auto;padding:13px 20px;display:flex;align-items:center;gap:18px;justify-content:space-between}
+    .brand{display:flex;align-items:center;gap:12px}.brand-mark{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#3b82f6,#06b6d4);display:grid;place-items:center;font-weight:900;box-shadow:inset 0 0 0 1px rgba(255,255,255,.2)}
+    .brand h1{font-size:18px;margin:0;letter-spacing:.1px}.brand p{margin:2px 0 0;font-size:11px;color:#c8d5e8}
+    .header-actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.btn{border:1px solid transparent;border-radius:9px;padding:9px 13px;font-weight:700;font-size:12px;display:inline-flex;align-items:center;gap:7px;transition:.15s}
+    .btn-primary{background:#2563eb;color:white}.btn-primary:hover{background:#1d4ed8}.btn-dark{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18);color:white}.btn-dark:hover{background:rgba(255,255,255,.14)}
+    .btn-light{background:white;border-color:#dbe3ef;color:#344054}.btn-light:hover{background:#f8fafc}.btn-danger{background:#fff1f2;border-color:#fecdd3;color:#be123c}
+    #fileInput{display:none}.shell{max-width:1720px;margin:auto;padding:0 20px 32px}.status-strip{display:none;align-items:center;gap:8px;padding:8px 0;color:var(--muted);font-size:11px}.status-dot{width:8px;height:8px;border-radius:50%;background:var(--green)}
+    .tabs-wrap{display:none;position:sticky;top:66px;z-index:40;background:rgba(244,247,251,.95);backdrop-filter:blur(8px);padding-top:12px}.tabs{display:flex;gap:7px;border-bottom:1px solid #dfe6ef;overflow:auto}.tab{border:0;background:transparent;padding:12px 14px;font-size:12px;font-weight:800;color:#667085;border-bottom:3px solid transparent;white-space:nowrap}.tab.active{color:var(--blue);border-bottom-color:var(--blue);background:#eef4ff;border-radius:9px 9px 0 0}
+    .filters{display:none;background:white;border:1px solid var(--line);border-radius:14px;box-shadow:0 5px 18px rgba(16,35,63,.05);padding:12px;margin:13px 0 15px}.filter-grid{display:grid;grid-template-columns:repeat(7,minmax(145px,1fr));gap:9px;align-items:end}.field label{display:block;font-size:10px;font-weight:800;color:#667085;text-transform:uppercase;letter-spacing:.04em;margin:0 0 5px}.field select,.field input{width:100%;height:36px;border:1px solid #d8e0eb;border-radius:8px;background:#fbfcfe;color:#344054;padding:0 9px;font-size:11px;outline:none}.field select:focus,.field input:focus{border-color:#60a5fa;box-shadow:0 0 0 3px #dbeafe}.filter-actions{display:flex;gap:7px;align-items:center}.filter-actions .btn{height:36px;justify-content:center}
+    .content{display:none}.view{display:none}.view.active{display:block}.grid{display:grid;gap:14px}.kpi-grid{grid-template-columns:repeat(6,minmax(0,1fr));margin-bottom:14px}.kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 14px 12px;box-shadow:0 5px 16px rgba(16,35,63,.045);min-height:104px;position:relative;overflow:hidden}.kpi:after{content:"";position:absolute;right:-26px;top:-28px;width:72px;height:72px;border-radius:50%;background:var(--tint,#eef4ff)}
+    .kpi .label{font-size:10px;font-weight:900;color:#667085;text-transform:uppercase;letter-spacing:.05em}.kpi .value{font-size:27px;font-weight:900;letter-spacing:-.6px;margin-top:7px}.kpi .sub{font-size:10px;color:#7a8699;margin-top:3px}.kpi .delta{font-size:10px;font-weight:800;margin-top:4px}.good{color:var(--green)}.bad{color:var(--red)}.warn{color:var(--amber)}
+    .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;box-shadow:var(--shadow)}.panel h3{font-size:13px;margin:0;font-weight:900}.panel p.hint{font-size:10px;color:#7a8699;margin:4px 0 10px}.panel-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:4px}.tag{display:inline-flex;align-items:center;border-radius:999px;padding:4px 8px;font-size:9px;font-weight:900;background:#eef4ff;color:#1d4ed8;white-space:nowrap}.tag.amber{background:#fff7ed;color:#b45309}.tag.green{background:#ecfdf3;color:#047857}.tag.red{background:#fff1f2;color:#be123c}
+    .g-2{grid-template-columns:repeat(2,minmax(0,1fr))}.g-3{grid-template-columns:repeat(3,minmax(0,1fr))}.g-31{grid-template-columns:2fr 1fr}.g-13{grid-template-columns:1fr 2fr}.chart{position:relative;height:330px}.chart.tall{height:390px}.chart.short{height:280px}
+    .insight{background:linear-gradient(135deg,#0f2745,#173c66);color:white;border-radius:14px;padding:17px;min-height:100%}.insight h3{font-size:13px;margin:0 0 11px}.insight ul{padding-left:17px;margin:0}.insight li{font-size:11px;line-height:1.55;margin:7px 0;color:#dbe8f7}.insight b{color:white}.metric-note{font-size:10px;color:#7a8699;line-height:1.45;background:#f8fafc;border:1px dashed #dbe3ef;padding:9px;border-radius:9px}
+    .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:10px;max-height:470px}.data-table{width:100%;border-collapse:collapse;font-size:10px;white-space:nowrap}.data-table th{position:sticky;top:0;z-index:2;background:#f1f5f9;color:#475467;text-align:left;padding:9px;border-bottom:1px solid #dbe3ef;text-transform:uppercase;letter-spacing:.03em;font-size:9px}.data-table td{padding:8px 9px;border-bottom:1px solid #eef2f6;color:#344054}.data-table tr:hover td{background:#f8fbff}.num{text-align:right!important;font-variant-numeric:tabular-nums}.rank{font-weight:900;color:#1d4ed8}.pill{display:inline-flex;border-radius:999px;padding:3px 7px;font-size:9px;font-weight:800;background:#f1f5f9}.pill.red{background:#fff1f2;color:#be123c}.pill.amber{background:#fff7ed;color:#b45309}.pill.green{background:#ecfdf3;color:#047857}
+    .empty{min-height:68vh;display:grid;place-items:center;text-align:center}.empty-card{max-width:760px;padding:38px;background:white;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}.empty-icon{font-size:42px}.empty h2{font-size:25px;margin:12px 0 7px}.empty p{font-size:12px;color:#667085;line-height:1.6;margin:0 auto 16px}.empty-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:18px}.empty-feature{text-align:left;background:#f8fafc;border:1px solid #e6ebf2;border-radius:10px;padding:11px}.empty-feature b{display:block;font-size:10px;margin-bottom:4px}.empty-feature span{font-size:9px;color:#7a8699;line-height:1.45}
+    .loader{display:none;position:fixed;inset:0;z-index:100;background:rgba(244,247,251,.88);backdrop-filter:blur(5px);align-items:center;justify-content:center}.loader-card{background:white;border:1px solid var(--line);border-radius:16px;padding:24px 30px;box-shadow:var(--shadow);text-align:center;min-width:320px}.spinner{width:34px;height:34px;border:4px solid #dbeafe;border-top-color:#2563eb;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 10px}@keyframes spin{to{transform:rotate(360deg)}}.loader-title{font-size:13px;font-weight:900}.loader-text{font-size:10px;color:#7a8699;margin-top:5px}
+    .quality-grid{grid-template-columns:repeat(5,minmax(0,1fr));margin-bottom:14px}.quality-card{background:white;border:1px solid var(--line);border-radius:12px;padding:12px}.quality-card .q-label{font-size:9px;font-weight:900;text-transform:uppercase;color:#667085}.quality-card .q-value{font-size:22px;font-weight:900;margin-top:4px}.quality-card .q-sub{font-size:9px;color:#7a8699;margin-top:2px}.schema{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.schema-item{border:1px solid #e5eaf2;border-radius:9px;padding:9px;background:#fbfcfe}.schema-item b{font-size:10px}.schema-item span{font-size:9px;color:#7a8699;display:block;margin-top:3px}.warning-box{background:#fffaf0;border:1px solid #fde6b1;border-radius:10px;padding:10px;font-size:10px;line-height:1.55;color:#7c5c14}
+    .section-title{margin:18px 0 9px;font-size:14px;font-weight:900}.muted{color:#7a8699}.right{text-align:right}.nowrap{white-space:nowrap}.small{font-size:10px}.hidden{display:none!important}
+    @media(max-width:1300px){.filter-grid{grid-template-columns:repeat(4,minmax(150px,1fr))}.kpi-grid{grid-template-columns:repeat(3,1fr)}.quality-grid{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:900px){.header-inner{align-items:flex-start;flex-direction:column}.tabs-wrap{top:104px}.filter-grid{grid-template-columns:repeat(2,1fr)}.g-2,.g-3,.g-31,.g-13{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,1fr)}.quality-grid{grid-template-columns:repeat(2,1fr)}.schema{grid-template-columns:1fr}.chart{height:300px}.shell{padding:0 10px 24px}.empty-grid{grid-template-columns:1fr}}
+    @media(max-width:560px){.kpi-grid,.quality-grid,.filter-grid{grid-template-columns:1fr}.header-actions{width:100%}.header-actions .btn,.header-actions label{flex:1;justify-content:center}.tabs-wrap{top:142px}.kpi .value{font-size:24px}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-mark">WF</div>
+        <div><h1>WFM Payroll Analytics Pro</h1><p>Horas extra, recargos, drivers y control de nómina · Colombia</p></div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-dark" id="btnLatest" onclick="selectLatestCut()" disabled>Último corte</button>
+        <button class="btn btn-dark" id="btnExport" onclick="exportFilteredCSV()" disabled>Exportar filtrado CSV</button>
+        <label class="btn btn-primary" for="fileInput">Cargar Excel</label>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" onchange="handleFile(event)" />
+      </div>
+    </div>
+  </header>
 
+  <div class="shell">
+    <div class="status-strip" id="statusStrip"><span class="status-dot"></span><span id="statusText"></span></div>
+
+    <div class="tabs-wrap" id="tabsWrap">
+      <div class="tabs">
+        <button class="tab active" data-tab="executive" onclick="switchTab('executive')">Executive Overview</button>
+        <button class="tab" data-tab="overtime" onclick="switchTab('overtime')">Horas Extra & Drivers</button>
+        <button class="tab" data-tab="premiums" onclick="switchTab('premiums')">Recargos & Nocturnidad</button>
+        <button class="tab" data-tab="quality" onclick="switchTab('quality')">Detalle & Data Quality</button>
+      </div>
+    </div>
+
+    <section class="filters" id="filters">
+      <div class="filter-grid">
+        <div class="field"><label>Corte</label><select id="fCut" onchange="applyFilters()"><option value="all">Todos los cortes</option></select></div>
+        <div class="field"><label>WFM Director</label><select id="fDir" onchange="applyFilters()"><option value="all">Todos</option></select></div>
+        <div class="field"><label>WFM Manager</label><select id="fMgr" onchange="applyFilters()"><option value="all">Todos</option></select></div>
+        <div class="field"><label>Cuenta</label><select id="fAccount" onchange="applyFilters()"><option value="all">Todas</option></select></div>
+        <div class="field"><label>Role</label><select id="fRole" onchange="applyFilters()"><option value="all">Todos</option></select></div>
+        <div class="field"><label>Motivo Extra</label><select id="fReason" onchange="applyFilters()"><option value="all">Todos</option></select></div>
+        <div class="field"><label>Empleado / BMS ID</label><input id="fEmployee" placeholder="Buscar..." oninput="debouncedFilters()" /></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap">
+        <div class="small muted" id="filterSummary">Sin datos cargados</div>
+        <div class="filter-actions"><button class="btn btn-light" onclick="resetFilters()">Limpiar filtros</button></div>
+      </div>
+    </section>
+
+    <section class="empty" id="emptyState">
+      <div class="empty-card">
+        <div class="empty-icon">📊</div>
+        <h2>Payroll analytics construido sobre la estructura real de RAW</h2>
+        <p>Este dashboard separa correctamente <b>horas extra</b> de <b>recargos/nocturnidad</b>, usa el <b>BMS ID</b> como llave de empleado, ordena los cortes por fecha y calcula el equivalente FTE usando la intensidad horaria real del periodo.</p>
+        <label class="btn btn-primary" for="fileInput" style="justify-content:center">Cargar “Historico Nomina Colombia”</label>
+        <div class="empty-grid">
+          <div class="empty-feature"><b>OT correcto</b><span>Extras Ordinarias + Extras Dominicales + Extras Festivas. No mezcla Horas Nocturnas como si fueran OT.</span></div>
+          <div class="empty-feature"><b>Drivers</b><span>Pareto por Motivo Extra, hot list por cuenta/manager/empleado y tendencia por corte.</span></div>
+          <div class="empty-feature"><b>Data Quality</b><span>Valida columnas, IH atípica, fechas, BMS ID y cobertura de motivo sobre la OT ordinaria.</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="content" id="content">
+      <div class="view active" id="view-executive">
+        <div class="grid kpi-grid">
+          <div class="kpi" style="--tint:#eef4ff"><div class="label">Headcount impactado</div><div class="value" id="kpiHC">0</div><div class="sub">BMS ID únicos en selección</div></div>
+          <div class="kpi" style="--tint:#ecfdf3"><div class="label">Horas trabajadas</div><div class="value" id="kpiWorked">0</div><div class="sub">Campo Horas Totales (h)</div></div>
+          <div class="kpi" style="--tint:#fff7ed"><div class="label">Horas Extra reales</div><div class="value" id="kpiOT">0</div><div class="sub">Ord + Extra Dom + Extra Fest</div><div class="delta" id="kpiOTDelta"></div></div>
+          <div class="kpi" style="--tint:#fff1f2"><div class="label">OT Rate</div><div class="value" id="kpiOTRate">0%</div><div class="sub">OT / horas trabajadas</div></div>
+          <div class="kpi" style="--tint:#f3e8ff"><div class="label">FTE equivalente OT</div><div class="value" id="kpiFTE">0.0</div><div class="sub">Capacidad equivalente del periodo</div></div>
+          <div class="kpi" style="--tint:#ecfeff"><div class="label">Horas Nocturnas</div><div class="value" id="kpiNight">0</div><div class="sub">Se muestra aparte: no es OT</div></div>
+        </div>
+
+        <div class="grid g-31">
+          <div class="panel">
+            <div class="panel-head"><div><h3>Tendencia de Horas Extra por corte</h3><p class="hint">Stacked OT por tipo + línea OT por HC. Los cortes se ordenan por Inicio Corte, no por texto.</p></div><span class="tag">OT = P + L + N</span></div>
+            <div class="chart tall"><canvas id="chartOTTrend"></canvas></div>
+          </div>
+          <div class="insight"><h3>Lectura ejecutiva</h3><ul id="executiveInsights"><li>Carga el Excel para generar la lectura.</li></ul></div>
+        </div>
+
+        <div class="grid g-2" style="margin-top:14px">
+          <div class="panel"><div class="panel-head"><div><h3>Pareto de Motivo Extra</h3><p class="hint">Driver de la OT ordinaria. El archivo atribuye el motivo sobre “extras ordinarias”.</p></div><span class="tag amber">80/20</span></div><div class="chart"><canvas id="chartReasonPareto"></canvas></div></div>
+          <div class="panel"><div class="panel-head"><div><h3>Top cuentas por Horas Extra</h3><p class="hint">OT total real, no suma horas nocturnas ni recargos.</p></div><span class="tag green" id="topAccountTag">Top 10</span></div><div class="chart"><canvas id="chartAccounts"></canvas></div></div>
+        </div>
+
+        <div class="grid g-3" style="margin-top:14px">
+          <div class="panel"><h3>Mix de Horas Extra</h3><p class="hint">Composición de OT por naturaleza.</p><div class="chart short"><canvas id="chartOTMix"></canvas></div></div>
+          <div class="panel"><h3>OT por WFM Director</h3><p class="hint">Horas extra acumuladas dentro de los filtros.</p><div class="chart short"><canvas id="chartDirectors"></canvas></div></div>
+          <div class="panel"><h3>OT por Role</h3><p class="hint">Concentración por rol / nivel.</p><div class="chart short"><canvas id="chartRoles"></canvas></div></div>
+        </div>
+      </div>
+
+      <div class="view" id="view-overtime">
+        <div class="grid kpi-grid">
+          <div class="kpi"><div class="label">OT Ordinaria</div><div class="value" id="otOrd">0</div><div class="sub">extras ordinarias</div></div>
+          <div class="kpi"><div class="label">OT Dominical</div><div class="value" id="otSun">0</div><div class="sub">Extras Dominicales (h)</div></div>
+          <div class="kpi"><div class="label">OT Festiva</div><div class="value" id="otHoliday">0</div><div class="sub">Extras Festivas (h)</div></div>
+          <div class="kpi"><div class="label">OT / HC</div><div class="value" id="otPerHC">0</div><div class="sub">Horas extra por empleado</div></div>
+          <div class="kpi"><div class="label">Cobertura de Motivo</div><div class="value" id="reasonCoverage">0%</div><div class="sub">OT ordinaria con motivo</div></div>
+          <div class="kpi"><div class="label">Cuenta Top</div><div class="value" id="otTopAccount" style="font-size:16px;line-height:1.2">-</div><div class="sub" id="otTopAccountSub">-</div></div>
+        </div>
+
+        <div class="grid g-2">
+          <div class="panel"><div class="panel-head"><div><h3>Drivers de OT ordinaria</h3><p class="hint">Horas y participación por Motivo Extra.</p></div><span class="tag">Motivo Extra</span></div><div class="chart"><canvas id="chartReasonBars"></canvas></div></div>
+          <div class="panel"><div class="panel-head"><div><h3>Top WFM Managers</h3><p class="hint">OT total acumulada por manager.</p></div><span class="tag">Top 12</span></div><div class="chart"><canvas id="chartManagers"></canvas></div></div>
+        </div>
+
+        <h3 class="section-title">Hot list por cuenta</h3>
+        <div class="panel"><div class="table-wrap"><table class="data-table"><thead><tr><th>#</th><th>Cuenta</th><th class="num">HC</th><th class="num">Hrs trabajadas</th><th class="num">OT Ord</th><th class="num">OT Dom</th><th class="num">OT Fest</th><th class="num">OT Total</th><th class="num">OT Rate</th><th class="num">Share OT</th></tr></thead><tbody id="accountHotlist"></tbody></table></div></div>
+
+        <h3 class="section-title">Empleados con OT atípica</h3>
+        <div class="panel">
+          <div class="panel-head"><div><h3>Outlier robusto por BMS ID</h3><p class="hint">Umbral = Q3 + 1.5×IQR sobre OT total por empleado en la selección. Evita el sesgo de usar únicamente nombre o Z-score global.</p></div><span class="tag red" id="outlierTag">0 outliers</span></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>#</th><th>BMS ID</th><th>Empleado</th><th>Role</th><th>Manager</th><th>Cuenta principal</th><th class="num">OT Total</th><th class="num">OT / Corte</th><th class="num">Cortes c/ OT</th><th>Señal</th></tr></thead><tbody id="employeeOutliers"></tbody></table></div>
+        </div>
+      </div>
+
+      <div class="view" id="view-premiums">
+        <div class="grid kpi-grid">
+          <div class="kpi"><div class="label">Recargo Dominical</div><div class="value" id="premSun">0</div><div class="sub">Recargo Dominical (h)</div></div>
+          <div class="kpi"><div class="label">Recargo Festivo</div><div class="value" id="premHoliday">0</div><div class="sub">Recargo Festivo (h)</div></div>
+          <div class="kpi"><div class="label">Horas Nocturnas</div><div class="value" id="premNight">0</div><div class="sub">Horas Nocturnas (h)</div></div>
+          <div class="kpi"><div class="label">Nocturnidad / Hrs</div><div class="value" id="nightRate">0%</div><div class="sub">Horas nocturnas / trabajadas</div></div>
+          <div class="kpi"><div class="label">Dom / Hrs</div><div class="value" id="sunRate">0%</div><div class="sub">Recargo dominical / trabajadas</div></div>
+          <div class="kpi"><div class="label">Fest / Hrs</div><div class="value" id="holidayRate">0%</div><div class="sub">Recargo festivo / trabajadas</div></div>
+        </div>
+        <div class="warning-box" style="margin-bottom:14px"><b>Regla de cálculo:</b> Recargo Dominical, Recargo Festivo y Horas Nocturnas son conceptos que pueden coexistir sobre la misma hora trabajada. Por eso el dashboard <b>no los suma como si fueran horas adicionales</b> ni los convierte a FTE.</div>
+        <div class="panel"><div class="panel-head"><div><h3>Tendencia de recargos y nocturnidad por corte</h3><p class="hint">Cada serie se presenta separada; tooltip incluye valor absoluto y tasa sobre horas trabajadas.</p></div><span class="tag amber">No aditivo</span></div><div class="chart tall"><canvas id="chartPremiumTrend"></canvas></div></div>
+        <div class="grid g-3" style="margin-top:14px">
+          <div class="panel"><h3>Top cuentas · Nocturnidad</h3><p class="hint">Horas nocturnas.</p><div class="chart short"><canvas id="chartNightAccounts"></canvas></div></div>
+          <div class="panel"><h3>Top cuentas · Recargo Dominical</h3><p class="hint">Horas con recargo dominical.</p><div class="chart short"><canvas id="chartSunAccounts"></canvas></div></div>
+          <div class="panel"><h3>Top cuentas · Recargo Festivo</h3><p class="hint">Horas con recargo festivo.</p><div class="chart short"><canvas id="chartHolidayAccounts"></canvas></div></div>
+        </div>
+      </div>
+
+      <div class="view" id="view-quality">
+        <div class="grid quality-grid">
+          <div class="quality-card"><div class="q-label">Filas RAW</div><div class="q-value" id="qRows">0</div><div class="q-sub">registros procesados</div></div>
+          <div class="quality-card"><div class="q-label">BMS ID únicos</div><div class="q-value" id="qHC">0</div><div class="q-sub">llave de empleado</div></div>
+          <div class="quality-card"><div class="q-label">Cortes</div><div class="q-value" id="qCuts">0</div><div class="q-sub">ordenados por Inicio Corte</div></div>
+          <div class="quality-card"><div class="q-label">OT Ord sin motivo</div><div class="q-value" id="qReasonMissing">0</div><div class="q-sub">horas sin driver</div></div>
+          <div class="quality-card"><div class="q-label">IH atípica</div><div class="q-value" id="qIH">0</div><div class="q-sub">filas con IH &lt;24 o &gt;60</div></div>
+        </div>
+        <div class="grid g-2">
+          <div class="panel"><h3>Mapeo de columnas</h3><p class="hint">El parser usa nombres exactos normalizados y aliases controlados; no usa “includes” ambiguos.</p><div class="schema" id="schemaGrid"></div></div>
+          <div class="panel"><h3>Alertas de Data Quality</h3><p class="hint">Checks sobre la base completa cargada.</p><div id="qualityAlerts"></div></div>
+        </div>
+        <h3 class="section-title">Detalle filtrado</h3>
+        <div class="panel">
+          <div class="panel-head"><div><h3>Preview de registros</h3><p class="hint">Se muestran máximo 500 filas en pantalla. “Exportar filtrado CSV” descarga el universo filtrado completo.</p></div><span class="tag" id="detailCountTag">0 filas</span></div>
+          <div class="table-wrap"><table class="data-table"><thead><tr><th>Fecha</th><th>Corte</th><th>BMS ID</th><th>Empleado</th><th>Role</th><th>Director</th><th>Manager</th><th>Cuenta</th><th class="num">IH</th><th class="num">Hrs Tot</th><th class="num">OT Ord</th><th class="num">OT Dom</th><th class="num">OT Fest</th><th class="num">OT Total</th><th class="num">Rec Dom</th><th class="num">Rec Fest</th><th class="num">Noct</th><th>Motivo Extra</th></tr></thead><tbody id="detailBody"></tbody></table></div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="loader" id="loader"><div class="loader-card"><div class="spinner"></div><div class="loader-title" id="loaderTitle">Procesando archivo...</div><div class="loader-text" id="loaderText">Leyendo RAW</div></div></div>
+
+<script>
+'use strict';
+
+const APP_VERSION = '3.0.0';
+let rawDataStore = [];
+let filteredData = [];
+let chartStore = {};
+let columnAudit = {};
+let qualityState = {};
+let filterTimer = null;
+let latestCut = null;
+
+const COLORS = {
+  blue:'#2563eb', cyan:'#0891b2', green:'#059669', amber:'#d97706', red:'#dc2626', purple:'#7c3aed', slate:'#64748b', navy:'#17385f', pink:'#db2777'
+};
+const PALETTE = ['#2563eb','#0891b2','#059669','#d97706','#7c3aed','#db2777','#475569','#dc2626','#0f766e','#9333ea','#0284c7','#65a30d'];
+
+if (window.Chart) {
+  Chart.defaults.font.family = 'Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif';
+  Chart.defaults.color = '#667085';
+  Chart.defaults.animation.duration = 250;
+  if (window.ChartDataLabels) Chart.register(ChartDataLabels);
+}
+
+const HEADER_ALIASES = {
+  director:['WFM Dir','Director'], manager:['WF Mng','WFM Mng','Manager'], id:['BMS ID','ID empleado','Employee ID'], name:['Name','Nombre','Nombre empleado'], role:['Role','Rol','Cargo'], ih:['IH','Intensidad Horaria'],
+  fecha:['Fecha'], realInicio:['RealInicio','Real Inicio'], realFin:['RealFin','Real Fin'], worked:['Horas Totales (h)','Horas Totales','Horas Totales h'],
+  sunPremium:['Recargo Dominical (h)','Recargo Dominical'], sunOT:['Extras Dominicales (h)','Extras Dominicales'], holidayPremium:['Recargo Festivo (h)','Recargo Festivo'], holidayOT:['Extras Festivas (h)','Extras Festivas'], night:['Horas Nocturnas (h)','Horas Nocturnas'], ordinaryOT:['extras ordinarias','Extras Ordinarias'],
+  account:['Cuenta','Campaña','Campana'], cutStart:['Inicio Corte'], cutEnd:['Fin Corte'], cutDays:['Dias','Días'], concat:['Concatenado'], cut:['Corte'], reason:['Motivo Extra','Motivo Ext','Motivo de extras']
+};
+const REQUIRED_FIELDS = ['director','manager','id','name','role','ih','fecha','worked','sunPremium','sunOT','holidayPremium','holidayOT','night','ordinaryOT','account','cutStart','cutEnd','cut'];
+
+function normText(v){
+  return String(v ?? '').replace(/\u00A0/g,' ').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,' ').trim().toLowerCase();
+}
+function cleanText(v, fallback='') { const x=String(v ?? '').replace(/\u00A0/g,' ').replace(/\s+/g,' ').trim(); return x || fallback; }
+function num(v){ if (typeof v==='number' && Number.isFinite(v)) return v; if (v==null || v==='') return 0; const n=Number(String(v).replace(',','.')); return Number.isFinite(n)?n:0; }
+function fmtNum(v,d=0){ return Number(v||0).toLocaleString('es-CO',{minimumFractionDigits:d,maximumFractionDigits:d}); }
+function fmtPct(v,d=1){ return `${(Number(v||0)*100).toLocaleString('es-CO',{minimumFractionDigits:d,maximumFractionDigits:d})}%`; }
+function fmtDate(d){ if(!d || isNaN(d)) return ''; return `${String(d.getUTCDate()).padStart(2,'0')}/${String(d.getUTCMonth()+1).padStart(2,'0')}/${d.getUTCFullYear()}`; }
+function dateKey(d){ if(!d || isNaN(d)) return ''; return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`; }
+function parseDate(v){
+  if(v==null || v==='') return null;
+  if(v instanceof Date && !isNaN(v)) return new Date(Date.UTC(v.getFullYear(),v.getMonth(),v.getDate()));
+  if(typeof v==='number'){
+    if(window.XLSX?.SSF?.parse_date_code){ const p=XLSX.SSF.parse_date_code(v); if(p) return new Date(Date.UTC(p.y,p.m-1,p.d)); }
+    const ms=Math.round((v-25569)*86400*1000); const d=new Date(ms); return isNaN(d)?null:d;
+  }
+  const s=cleanText(v); let m=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2,4})$/); if(m){ let y=+m[3]; if(y<100)y+=2000; return new Date(Date.UTC(y,+m[2]-1,+m[1])); }
+  const d=new Date(s); return isNaN(d)?null:new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));
+}
+function daysInclusive(a,b){ if(!a||!b) return 0; return Math.max(1,Math.round((b-a)/86400000)+1); }
+function unique(arr){ return [...new Set(arr.filter(v=>v!==''&&v!=null))]; }
+function safeDiv(a,b){ return b? a/b : 0; }
+function sum(arr,fn){ let t=0; for(const x of arr)t+=fn(x)||0; return t; }
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
+function escapeHtml(s){ return String(s??'').replace(/[&<>'"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[ch])); }
+function truncate(s,n=28){ s=String(s??''); return s.length>n?s.slice(0,n-1)+'…':s; }
+
+function showLoader(title,text=''){ document.getElementById('loaderTitle').textContent=title; document.getElementById('loaderText').textContent=text; document.getElementById('loader').style.display='flex'; }
+function hideLoader(){ document.getElementById('loader').style.display='none'; }
+function setStatus(text){ document.getElementById('statusText').textContent=text; document.getElementById('statusStrip').style.display='flex'; }
+function switchTab(tab){ document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab)); document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id===`view-${tab}`)); setTimeout(()=>Object.values(chartStore).forEach(c=>{try{c.resize()}catch(e){}}),50); }
+function debouncedFilters(){ clearTimeout(filterTimer); filterTimer=setTimeout(applyFilters,220); }
+
+function buildHeaderMap(row){
+  const actual=Object.keys(row||{}); const normalized=new Map(actual.map(h=>[normText(h),h])); const map={}; columnAudit={};
+  for(const [field,aliases] of Object.entries(HEADER_ALIASES)){
+    let found=null;
+    for(const alias of aliases){ const h=normalized.get(normText(alias)); if(h){found=h;break;} }
+    map[field]=found; columnAudit[field]={found:!!found,header:found,aliases};
+  }
+  return map;
+}
+function getVal(row,map,key){ return map[key] ? row[map[key]] : null; }
+
+async function handleFile(event){
+  const file=event.target.files?.[0]; if(!file)return;
+  if(!window.XLSX || !window.Chart){ alert('No se pudieron cargar las librerías de Excel/gráficos. Revisa conexión a internet/CDN.'); return; }
+  showLoader('Leyendo Excel…', file.name);
+  try{
+    const buf=await file.arrayBuffer();
+    const wb=XLSX.read(buf,{type:'array',cellDates:true,cellNF:true});
+    await new Promise(r=>setTimeout(r,20));
+    processWorkbook(wb,file.name);
+  }catch(err){ console.error(err); hideLoader(); alert(`No fue posible procesar el archivo: ${err.message}`); }
+  finally{ event.target.value=''; }
+}
+
+function processWorkbook(wb,fileName){
+  showLoader('Mapeando estructura RAW…','Validando columnas y cálculos');
+  const rawName=wb.SheetNames.find(n=>normText(n)==='raw') || wb.SheetNames.find(n=>normText(n).includes('raw'));
+  if(!rawName){ hideLoader(); alert(`No encontré la pestaña RAW. Hojas disponibles: ${wb.SheetNames.join(', ')}`); return; }
+  const rawRows=XLSX.utils.sheet_to_json(wb.Sheets[rawName],{defval:null,raw:true});
+  if(!rawRows.length){ hideLoader(); alert('La pestaña RAW está vacía.'); return; }
+  const map=buildHeaderMap(rawRows[0]);
+  const missing=REQUIRED_FIELDS.filter(f=>!map[f]);
+  if(missing.length){ hideLoader(); alert(`Faltan columnas críticas en RAW: ${missing.join(', ')}. Revisa el esquema en el archivo.`); return; }
+
+  let extrasReasonMap=null;
+  const extrasName=wb.SheetNames.find(n=>normText(n)==='extras');
+  if(extrasName) extrasReasonMap=buildExtrasFallback(wb.Sheets[extrasName]);
+
+  rawDataStore=new Array(rawRows.length);
+  for(let i=0;i<rawRows.length;i++){
+    const r=rawRows[i];
+    const fecha=parseDate(getVal(r,map,'fecha')); const cutStart=parseDate(getVal(r,map,'cutStart')); const cutEnd=parseDate(getVal(r,map,'cutEnd'));
+    const id=cleanText(getVal(r,map,'id'),'SIN_ID'); const cut=cleanText(getVal(r,map,'cut'),'Sin Corte');
+    const ordinaryOT=num(getVal(r,map,'ordinaryOT')); const sunOT=num(getVal(r,map,'sunOT')); const holidayOT=num(getVal(r,map,'holidayOT'));
+    let reason=cleanText(getVal(r,map,'reason'));
+    if(!reason && ordinaryOT>0 && extrasReasonMap){
+      const key=`${id}|${dateKey(fecha)}|${normText(cut)}|${ordinaryOT.toFixed(4)}`;
+      const q=extrasReasonMap.get(key); if(q?.length) reason=q.shift();
+      if(!reason){ const key2=`${id}|${dateKey(fecha)}|${normText(cut)}`; const q2=extrasReasonMap.get(key2); if(q2?.length) reason=q2.shift(); }
+    }
+    const cutDays=daysInclusive(cutStart,cutEnd) || Math.max(1,num(getVal(r,map,'cutDays'))+1);
+    rawDataStore[i]={
+      director:cleanText(getVal(r,map,'director'),'Sin Director'), manager:cleanText(getVal(r,map,'manager'),'Sin Manager'), id,
+      name:cleanText(getVal(r,map,'name'),'Sin Nombre'), role:cleanText(getVal(r,map,'role'),'Sin Role'), ih:num(getVal(r,map,'ih')),
+      fecha, fechaKey:dateKey(fecha), realInicio:parseDate(getVal(r,map,'realInicio')), realFin:parseDate(getVal(r,map,'realFin')), worked:num(getVal(r,map,'worked')),
+      sunPremium:num(getVal(r,map,'sunPremium')), sunOT, holidayPremium:num(getVal(r,map,'holidayPremium')), holidayOT, night:num(getVal(r,map,'night')), ordinaryOT,
+      account:cleanText(getVal(r,map,'account'),'Sin Cuenta'), cutStart, cutEnd, cutDays, sourceCutDays:num(getVal(r,map,'cutDays')), cut, reason:cleanText(reason),
+      ot:ordinaryOT+sunOT+holidayOT
+    };
+  }
+  rawDataStore.sort((a,b)=>(a.cutStart-b.cutStart)||(a.fecha-b.fecha)||a.id.localeCompare(b.id));
+  latestCut=getLatestCut(rawDataStore);
+  qualityState=analyzeQuality(rawDataStore);
+  populateFilters();
+  document.getElementById('emptyState').style.display='none'; document.getElementById('content').style.display='block'; document.getElementById('tabsWrap').style.display='block'; document.getElementById('filters').style.display='block';
+  document.getElementById('btnLatest').disabled=false; document.getElementById('btnExport').disabled=false;
+  setStatus(`${fileName} · RAW: ${fmtNum(rawDataStore.length)} filas · ${fmtNum(qualityState.hc)} BMS ID · ${qualityState.cutCount} cortes · v${APP_VERSION}`);
+  applyFilters(); renderQualityBase(); hideLoader();
+}
+
+function buildExtrasFallback(sheet){
+  try{
+    const rows=XLSX.utils.sheet_to_json(sheet,{defval:null,raw:true}); if(!rows.length)return null;
+    const m=buildHeaderMapForExtras(rows[0]); if(!m.reason||!m.id||!m.fecha||!m.cut)return null;
+    const map=new Map();
+    for(const r of rows){
+      const id=cleanText(r[m.id]); const d=parseDate(r[m.fecha]); const cut=cleanText(r[m.cut]); const hrs=num(r[m.ordinaryOT]); const reason=cleanText(r[m.reason]); if(!reason)continue;
+      const keys=[`${id}|${dateKey(d)}|${normText(cut)}|${hrs.toFixed(4)}`,`${id}|${dateKey(d)}|${normText(cut)}`];
+      for(const k of keys){ if(!map.has(k))map.set(k,[]); map.get(k).push(reason); }
+    }
+    return map;
+  }catch(e){ console.warn('Fallback Extras no disponible',e); return null; }
+}
+function buildHeaderMapForExtras(row){
+  const keys=Object.keys(row); const nm=new Map(keys.map(k=>[normText(k),k])); const find=(arr)=>arr.map(a=>nm.get(normText(a))).find(Boolean)||null;
+  return {reason:find(['Novedad','Motivo Extra']),ordinaryOT:find(['extras ordinarias','Extras Ordinarias']),id:find(['BMS ID']),fecha:find(['Fecha']),cut:find(['Corte'])};
+}
+
+function getLatestCut(data){
+  const map=new Map(); for(const d of data){ const key=d.cut; const val=map.get(key); if(!val || (d.cutStart&&d.cutStart>val))map.set(key,d.cutStart); }
+  return [...map.entries()].sort((a,b)=>(a[1]-b[1])).at(-1)?.[0] || null;
+}
+function populateSelect(id,values,allText){ const el=document.getElementById(id); el.innerHTML=`<option value="all">${allText}</option>`+values.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join(''); }
+function populateFilters(){
+  const cutMeta=new Map(); rawDataStore.forEach(d=>{ const old=cutMeta.get(d.cut); if(!old || (d.cutStart && d.cutStart<old)) cutMeta.set(d.cut,d.cutStart); });
+  const cuts=[...cutMeta.entries()].sort((a,b)=>((a[1]?.getTime?.()||0)-(b[1]?.getTime?.()||0))).map(x=>x[0]);
+  populateSelect('fCut',cuts,'Todos los cortes');
+  populateSelect('fDir',unique(rawDataStore.map(d=>d.director)).sort((a,b)=>a.localeCompare(b,'es')),'Todos');
+  populateSelect('fMgr',unique(rawDataStore.map(d=>d.manager)).sort((a,b)=>a.localeCompare(b,'es')),'Todos');
+  populateSelect('fAccount',unique(rawDataStore.map(d=>d.account)).sort((a,b)=>a.localeCompare(b,'es')),'Todas');
+  populateSelect('fRole',unique(rawDataStore.map(d=>d.role)).sort((a,b)=>a.localeCompare(b,'es')),'Todos');
+  populateSelect('fReason',unique(rawDataStore.map(d=>d.reason)).filter(Boolean).sort((a,b)=>a.localeCompare(b,'es')),'Todos');
+}
+
+function resetFilters(){
+  ['fCut','fDir','fMgr','fAccount','fRole','fReason'].forEach(id=>document.getElementById(id).value='all'); document.getElementById('fEmployee').value=''; applyFilters();
+}
+function selectLatestCut(){ if(!latestCut)return; document.getElementById('fCut').value=latestCut; applyFilters(); }
+function currentFilterState(){
+  return {cut:document.getElementById('fCut').value,dir:document.getElementById('fDir').value,mgr:document.getElementById('fMgr').value,account:document.getElementById('fAccount').value,role:document.getElementById('fRole').value,reason:document.getElementById('fReason').value,employee:normText(document.getElementById('fEmployee').value)};
+}
+function filterDataset(state=currentFilterState(), overrideCut=undefined){
+  const cut=overrideCut===undefined?state.cut:overrideCut;
+  return rawDataStore.filter(d=>(cut==='all'||d.cut===cut)&&(state.dir==='all'||d.director===state.dir)&&(state.mgr==='all'||d.manager===state.mgr)&&(state.account==='all'||d.account===state.account)&&(state.role==='all'||d.role===state.role)&&(state.reason==='all'||d.reason===state.reason)&&(!state.employee||normText(d.name).includes(state.employee)||normText(d.id).includes(state.employee)));
+}
+function applyFilters(){
+  if(!rawDataStore.length)return; const state=currentFilterState(); filteredData=filterDataset(state);
+  const hc=new Set(filteredData.map(d=>d.id)).size; const cuts=new Set(filteredData.map(d=>d.cut)).size;
+  document.getElementById('filterSummary').textContent=`${fmtNum(filteredData.length)} filas · ${fmtNum(hc)} HC · ${cuts} corte${cuts===1?'':'s'} · ${state.cut==='all'?'Histórico completo':state.cut}`;
+  renderExecutive(filteredData,state); renderOvertime(filteredData); renderPremiums(filteredData); renderDetail(filteredData);
+}
+
+function aggregate(data){
+  const a={rows:data.length,worked:0,ordinaryOT:0,sunOT:0,holidayOT:0,ot:0,sunPremium:0,holidayPremium:0,night:0,ids:new Set(),reasonedOrdinary:0,cutMap:new Map()};
+  for(const d of data){
+    a.worked+=d.worked; a.ordinaryOT+=d.ordinaryOT; a.sunOT+=d.sunOT; a.holidayOT+=d.holidayOT; a.ot+=d.ot; a.sunPremium+=d.sunPremium; a.holidayPremium+=d.holidayPremium; a.night+=d.night; a.ids.add(d.id); if(d.reason)a.reasonedOrdinary+=d.ordinaryOT;
+    if(!a.cutMap.has(d.cut))a.cutMap.set(d.cut,{cut:d.cut,start:d.cutStart,end:d.cutEnd,days:d.cutDays,worked:0,ordinaryOT:0,sunOT:0,holidayOT:0,ot:0,sunPremium:0,holidayPremium:0,night:0,ids:new Set(),ihById:new Map()});
+    const c=a.cutMap.get(d.cut); c.worked+=d.worked;c.ordinaryOT+=d.ordinaryOT;c.sunOT+=d.sunOT;c.holidayOT+=d.holidayOT;c.ot+=d.ot;c.sunPremium+=d.sunPremium;c.holidayPremium+=d.holidayPremium;c.night+=d.night;c.ids.add(d.id); if(d.ih>0)c.ihById.set(d.id,d.ih); if(d.cutStart&&(!c.start||d.cutStart<c.start))c.start=d.cutStart; if(d.cutEnd&&(!c.end||d.cutEnd>c.end))c.end=d.cutEnd; c.days=Math.max(c.days||0,d.cutDays||0);
+  }
+  a.hc=a.ids.size; a.otRate=safeDiv(a.ot,a.worked); a.otPerHC=safeDiv(a.ot,a.hc); a.reasonCoverage=safeDiv(a.reasonedOrdinary,a.ordinaryOT);
+  let oneFteHours=0;
+  for(const c of a.cutMap.values()){
+    const ihs=[...c.ihById.values()].filter(x=>x>0); const avgIH=ihs.length?sum(ihs,x=>x)/ihs.length:42; const days=c.days||daysInclusive(c.start,c.end)||14; oneFteHours+=avgIH*(days/7);
+  }
+  a.oneFteHours=oneFteHours; a.fteEq=safeDiv(a.ot,oneFteHours); return a;
+}
+function groupMetric(data,keyFn,valueFn){ const m=new Map(); for(const d of data){ const k=keyFn(d)||'Sin dato'; m.set(k,(m.get(k)||0)+(valueFn(d)||0)); } return m; }
+function groupAccountAgg(data){
+  const m=new Map(); for(const d of data){ if(!m.has(d.account))m.set(d.account,{name:d.account,ids:new Set(),worked:0,ordinaryOT:0,sunOT:0,holidayOT:0,ot:0}); const x=m.get(d.account); x.ids.add(d.id);x.worked+=d.worked;x.ordinaryOT+=d.ordinaryOT;x.sunOT+=d.sunOT;x.holidayOT+=d.holidayOT;x.ot+=d.ot; }
+  return [...m.values()].map(x=>({...x,hc:x.ids.size,otRate:safeDiv(x.ot,x.worked)})).sort((a,b)=>b.ot-a.ot);
+}
+function sortedCutAgg(data){ return [...aggregate(data).cutMap.values()].sort((a,b)=>(a.start-b.start)); }
+function shortCutLabel(s){ return String(s).replace(/\s+/g,' ').replace(/\b(Enero|Febrero|Marzo|Abril|Mayo|Junio|Julio|Agosto|Septiembre|Octubre|Noviembre|Diciembre)\b/gi,m=>m.slice(0,3)); }
+
+function compareOTDelta(state){
+  const cuts=[...new Map(rawDataStore.map(d=>[d.cut,d.cutStart])).entries()].sort((a,b)=>a[1]-b[1]).map(x=>x[0]);
+  let current=state.cut==='all'?latestCut:state.cut; const idx=cuts.indexOf(current); if(idx<=0)return null; const prev=cuts[idx-1];
+  const a=aggregate(filterDataset(state,current)), b=aggregate(filterDataset(state,prev)); if(!a.hc||!b.hc)return null;
+  const cur=safeDiv(a.ot,a.hc), old=safeDiv(b.ot,b.hc); return {current,prev,cur,old,delta:safeDiv(cur-old,old),currentOT:a.ot,prevOT:b.ot};
+}
+
+function renderExecutive(data,state){
+  const a=aggregate(data); const delta=compareOTDelta(state);
+  document.getElementById('kpiHC').textContent=fmtNum(a.hc); document.getElementById('kpiWorked').textContent=fmtNum(a.worked,0); document.getElementById('kpiOT').textContent=fmtNum(a.ot,1); document.getElementById('kpiOTRate').textContent=fmtPct(a.otRate,2); document.getElementById('kpiFTE').textContent=fmtNum(a.fteEq,1); document.getElementById('kpiNight').textContent=fmtNum(a.night,1);
+  const dEl=document.getElementById('kpiOTDelta'); if(delta){ const up=delta.delta>0; dEl.className=`delta ${up?'bad':'good'}`; dEl.textContent=`${up?'▲':'▼'} ${fmtPct(Math.abs(delta.delta),1)} OT/HC vs ${shortCutLabel(delta.prev)}`; } else { dEl.className='delta muted'; dEl.textContent='Sin corte comparable'; }
+  renderOTTrend(data); renderReasonPareto(data,'chartReasonPareto'); renderTopBar('chartAccounts',groupMetric(data,d=>d.account,d=>d.ot),'Horas Extra',10,COLORS.blue); renderOTMix(a); renderTopBar('chartDirectors',groupMetric(data,d=>d.director,d=>d.ot),'Horas Extra',8,COLORS.purple); renderTopBar('chartRoles',groupMetric(data,d=>d.role,d=>d.ot),'Horas Extra',8,COLORS.green); renderInsights(data,a,delta);
+}
+
+function renderInsights(data,a,delta){
+  const accountAgg=groupAccountAgg(data); const reasonMap=groupMetric(data,d=>d.reason||'Sin motivo',d=>d.ordinaryOT); const reasons=[...reasonMap.entries()].sort((x,y)=>y[1]-x[1]); const topA=accountAgg[0]; const topReason=reasons[0]; const top3=sum(accountAgg.slice(0,3),x=>x.ot); const share3=safeDiv(top3,a.ot);
+  let cutText=[...a.cutMap.values()].sort((x,y)=>x.start-y.start); const period=cutText.length===1?cutText[0].cut:`${cutText.length} cortes`;
+  const items=[]; items.push(`<b>Scope:</b> ${escapeHtml(period)}, ${fmtNum(a.hc)} HC y ${fmtNum(a.worked)} horas trabajadas.`);
+  items.push(`<b>OT real:</b> ${fmtNum(a.ot,1)} h (${fmtPct(a.otRate,2)} de las horas trabajadas), equivalente a ${fmtNum(a.fteEq,1)} FTE promedio sobre la capacidad del periodo.`);
+  if(topA)items.push(`<b>Concentración:</b> ${escapeHtml(topA.name)} lidera con ${fmtNum(topA.ot,1)} h; Top 3 cuentas concentran ${fmtPct(share3,1)} de la OT.`);
+  if(topReason&&topReason[1]>0)items.push(`<b>Driver ordinario:</b> ${escapeHtml(topReason[0])} explica ${fmtNum(topReason[1],1)} h (${fmtPct(safeDiv(topReason[1],a.ordinaryOT),1)} de la OT ordinaria).`);
+  if(delta)items.push(`<b>Última señal:</b> OT/HC ${delta.delta>0?'subió':'bajó'} ${fmtPct(Math.abs(delta.delta),1)} frente a ${escapeHtml(shortCutLabel(delta.prev))}.`);
+  if(a.night>0)items.push(`<b>Nocturnidad:</b> ${fmtNum(a.night,1)} h (${fmtPct(safeDiv(a.night,a.worked),1)} de horas trabajadas). Se controla aparte para evitar doble conteo con OT/recargos.`);
+  document.getElementById('executiveInsights').innerHTML=items.map(x=>`<li>${x}</li>`).join('');
+}
+
+function baseChartOptions(extra={}){
+  return {responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{position:'top',labels:{boxWidth:10,boxHeight:10,font:{size:10}}},tooltip:{backgroundColor:'#10233f',titleColor:'#fff',bodyColor:'#e8eef6',padding:10,cornerRadius:8,callbacks:{}},datalabels:{color:'#475467',font:{size:9,weight:'700'},anchor:'end',align:'end',clamp:true,formatter:v=>Math.abs(v)>=1000?`${(v/1000).toFixed(1)}k`:Number(v).toFixed(v%1?1:0)}},scales:{x:{grid:{display:false},ticks:{font:{size:9}}},y:{beginAtZero:true,grid:{color:'#eef2f6'},ticks:{font:{size:9}}}},...extra};
+}
+function killChart(id){ if(chartStore[id]){ try{chartStore[id].destroy()}catch(e){} delete chartStore[id]; } }
+function renderOTTrend(data){
+  const cuts=sortedCutAgg(data); const id='chartOTTrend'; killChart(id); const ctx=document.getElementById(id); if(!ctx)return;
+  const labels=cuts.map(c=>shortCutLabel(c.cut));
+  chartStore[id]=new Chart(ctx,{type:'bar',data:{labels,datasets:[
+    {label:'OT Ordinaria',data:cuts.map(c=>c.ordinaryOT),backgroundColor:COLORS.blue,stack:'ot',borderRadius:3,datalabels:{display:cuts.length<=16,anchor:'center',align:'center',color:'#fff',formatter:v=>v>=1?fmtNum(v,0):''}},
+    {label:'OT Dominical',data:cuts.map(c=>c.sunOT),backgroundColor:COLORS.amber,stack:'ot',borderRadius:3,datalabels:{display:cuts.length<=16,anchor:'center',align:'center',color:'#fff',formatter:v=>v>=15?fmtNum(v,0):''}},
+    {label:'OT Festiva',data:cuts.map(c=>c.holidayOT),backgroundColor:COLORS.purple,stack:'ot',borderRadius:3,datalabels:{display:cuts.length<=16,anchor:'center',align:'center',color:'#fff',formatter:v=>v>=15?fmtNum(v,0):''}},
+    {type:'line',label:'OT / HC',data:cuts.map(c=>safeDiv(c.ot,c.ids.size)),borderColor:COLORS.red,backgroundColor:COLORS.red,yAxisID:'y1',tension:.25,pointRadius:3,pointBackgroundColor:'#fff',pointBorderWidth:2,datalabels:{display:true,color:COLORS.red,align:'top',anchor:'end',formatter:v=>fmtNum(v,1)}}
+  ]},options:baseChartOptions({scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:9},maxRotation:45,minRotation:0}},y:{stacked:true,beginAtZero:true,title:{display:true,text:'Horas Extra',font:{size:10}},grid:{color:'#eef2f6'}},y1:{position:'right',beginAtZero:true,title:{display:true,text:'OT / HC',font:{size:10}},grid:{drawOnChartArea:false}}},plugins:{legend:{position:'top',labels:{boxWidth:10,font:{size:10}}},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmtNum(c.raw,1)}${c.dataset.yAxisID==='y1'?' h/HC':' h'}`}},datalabels:{}}})});
+}
+
+function renderReasonPareto(data,id){
+  const m=groupMetric(data,d=>d.reason||'Sin motivo',d=>d.ordinaryOT); const arr=[...m.entries()].filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]); killChart(id); const ctx=document.getElementById(id); if(!ctx)return; if(!arr.length){chartStore[id]=emptyChart(ctx,'Sin OT ordinaria');return;}
+  const total=sum(arr,x=>x[1]); let acc=0; const cum=arr.map(x=>{acc+=x[1];return acc/total*100;});
+  chartStore[id]=new Chart(ctx,{type:'bar',data:{labels:arr.map(x=>truncate(x[0],30)),datasets:[{label:'OT Ordinaria',data:arr.map(x=>x[1]),backgroundColor:COLORS.blue,borderRadius:5,datalabels:{display:true,anchor:'end',align:'end',formatter:v=>fmtNum(v,0)}},{type:'line',label:'% acumulado',data:cum,borderColor:COLORS.red,backgroundColor:COLORS.red,yAxisID:'y1',tension:.2,pointRadius:3,datalabels:{display:true,color:COLORS.red,align:'top',formatter:v=>`${v.toFixed(0)}%`}}]},options:baseChartOptions({scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:20}},y:{beginAtZero:true,title:{display:true,text:'Horas'},grid:{color:'#eef2f6'}},y1:{position:'right',min:0,max:100,title:{display:true,text:'Acumulado %'},grid:{drawOnChartArea:false}}},plugins:{legend:{position:'top',labels:{boxWidth:10,font:{size:10}}},tooltip:{callbacks:{title:c=>arr[c[0].dataIndex]?.[0]||c[0].label,label:c=>c.dataset.yAxisID==='y1'?`Acumulado: ${c.raw.toFixed(1)}%`:`OT Ordinaria: ${fmtNum(c.raw,1)} h`}},datalabels:{}}})});
+}
+function renderTopBar(id,map,label,limit,color){
+  const arr=[...map.entries()].filter(x=>x[1]>0).sort((a,b)=>b[1]-a[1]).slice(0,limit).reverse(); killChart(id); const ctx=document.getElementById(id); if(!ctx)return; if(!arr.length){chartStore[id]=emptyChart(ctx,'Sin datos');return;}
+  chartStore[id]=new Chart(ctx,{type:'bar',data:{labels:arr.map(x=>truncate(x[0],31)),datasets:[{label,data:arr.map(x=>x[1]),backgroundColor:color,borderRadius:5}]},options:baseChartOptions({indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{title:c=>arr[arr.length-1-c[0].dataIndex]?.[0]||c[0].label,label:c=>`${label}: ${fmtNum(c.raw,1)} h`}},datalabels:{display:true,anchor:'end',align:'end',formatter:v=>fmtNum(v,0)}},scales:{x:{beginAtZero:true,grid:{color:'#eef2f6'},ticks:{font:{size:9}}},y:{grid:{display:false},ticks:{font:{size:9}}}}})});
+}
+function renderOTMix(a){
+  const id='chartOTMix'; killChart(id); const ctx=document.getElementById(id); const vals=[a.ordinaryOT,a.sunOT,a.holidayOT]; if(!sum(vals,x=>x)){chartStore[id]=emptyChart(ctx,'Sin OT');return;}
+  chartStore[id]=new Chart(ctx,{type:'doughnut',data:{labels:['Ordinaria','Dominical','Festiva'],datasets:[{data:vals,backgroundColor:[COLORS.blue,COLORS.amber,COLORS.purple],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}},tooltip:{callbacks:{label:c=>`${c.label}: ${fmtNum(c.raw,1)} h (${fmtPct(safeDiv(c.raw,a.ot),1)})`}},datalabels:{color:'#fff',font:{size:10,weight:'800'},formatter:v=>safeDiv(v,a.ot)>.06?fmtPct(safeDiv(v,a.ot),0):''}}}});
+}
+function emptyChart(ctx,text){ return new Chart(ctx,{type:'bar',data:{labels:[text],datasets:[{data:[0],backgroundColor:'#e5e7eb'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},datalabels:{display:false}},scales:{x:{display:false},y:{display:false}}}}); }
+
+function renderOvertime(data){
+  const a=aggregate(data); document.getElementById('otOrd').textContent=fmtNum(a.ordinaryOT,1);document.getElementById('otSun').textContent=fmtNum(a.sunOT,1);document.getElementById('otHoliday').textContent=fmtNum(a.holidayOT,1);document.getElementById('otPerHC').textContent=fmtNum(a.otPerHC,1);document.getElementById('reasonCoverage').textContent=fmtPct(a.reasonCoverage,1);
+  const accounts=groupAccountAgg(data); const top=accounts[0]; document.getElementById('otTopAccount').textContent=top?truncate(top.name,26):'-'; document.getElementById('otTopAccountSub').textContent=top?`${fmtNum(top.ot,1)} h · ${fmtPct(safeDiv(top.ot,a.ot),1)} del OT`:'-';
+  renderTopBar('chartReasonBars',groupMetric(data,d=>d.reason||'Sin motivo',d=>d.ordinaryOT),'OT Ordinaria',10,COLORS.cyan); renderTopBar('chartManagers',groupMetric(data,d=>d.manager,d=>d.ot),'Horas Extra',12,COLORS.purple); renderAccountHotlist(accounts,a.ot); renderEmployeeOutliers(data);
+}
+function renderAccountHotlist(accounts,totalOT){
+  const body=document.getElementById('accountHotlist'); const rows=accounts.slice(0,30); if(!rows.length){body.innerHTML='<tr><td colspan="10" style="text-align:center;padding:20px">Sin datos</td></tr>';return;}
+  body.innerHTML=rows.map((x,i)=>`<tr><td class="rank">${i+1}</td><td><b>${escapeHtml(x.name)}</b></td><td class="num">${fmtNum(x.hc)}</td><td class="num">${fmtNum(x.worked,0)}</td><td class="num">${fmtNum(x.ordinaryOT,1)}</td><td class="num">${fmtNum(x.sunOT,1)}</td><td class="num">${fmtNum(x.holidayOT,1)}</td><td class="num"><b>${fmtNum(x.ot,1)}</b></td><td class="num">${fmtPct(x.otRate,2)}</td><td class="num">${fmtPct(safeDiv(x.ot,totalOT),1)}</td></tr>`).join('');
+}
+function quantile(sorted,q){ if(!sorted.length)return 0; const pos=(sorted.length-1)*q,base=Math.floor(pos),rest=pos-base; return sorted[base+1]!==undefined?sorted[base]+rest*(sorted[base+1]-sorted[base]):sorted[base]; }
+function renderEmployeeOutliers(data){
+  const m=new Map(); for(const d of data){ if(!m.has(d.id))m.set(d.id,{id:d.id,name:d.name,role:d.role,manager:d.manager,ot:0,cuts:new Set(),accounts:new Map()}); const x=m.get(d.id); x.ot+=d.ot;if(d.ot>0)x.cuts.add(d.cut);x.accounts.set(d.account,(x.accounts.get(d.account)||0)+d.ot); }
+  const arr=[...m.values()].map(x=>{x.account=[...x.accounts.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]||'';x.otPerCut=safeDiv(x.ot,x.cuts.size||1);return x;}).filter(x=>x.ot>0);
+  const vals=arr.map(x=>x.ot).sort((a,b)=>a-b); const q1=quantile(vals,.25),q3=quantile(vals,.75),iqr=q3-q1,threshold=q3+1.5*iqr; const out=arr.filter(x=>x.ot>threshold).sort((a,b)=>b.ot-a.ot).slice(0,50); document.getElementById('outlierTag').textContent=`${out.length} outlier${out.length===1?'':'s'} · > ${fmtNum(threshold,1)} h`;
+  const body=document.getElementById('employeeOutliers'); if(!out.length){body.innerHTML='<tr><td colspan="10" style="text-align:center;padding:22px;color:#7a8699">No se detectaron outliers por IQR con los filtros actuales.</td></tr>';return;}
+  body.innerHTML=out.map((x,i)=>`<tr><td class="rank">${i+1}</td><td>${escapeHtml(x.id)}</td><td><b>${escapeHtml(x.name)}</b></td><td>${escapeHtml(x.role)}</td><td>${escapeHtml(x.manager)}</td><td>${escapeHtml(x.account)}</td><td class="num"><b>${fmtNum(x.ot,1)}</b></td><td class="num">${fmtNum(x.otPerCut,1)}</td><td class="num">${x.cuts.size}</td><td><span class="pill ${x.ot>threshold*1.5?'red':'amber'}">${x.ot>threshold*1.5?'Crítico':'Atípico'}</span></td></tr>`).join('');
+}
+
+function renderPremiums(data){
+  const a=aggregate(data); document.getElementById('premSun').textContent=fmtNum(a.sunPremium,1);document.getElementById('premHoliday').textContent=fmtNum(a.holidayPremium,1);document.getElementById('premNight').textContent=fmtNum(a.night,1);document.getElementById('nightRate').textContent=fmtPct(safeDiv(a.night,a.worked),1);document.getElementById('sunRate').textContent=fmtPct(safeDiv(a.sunPremium,a.worked),1);document.getElementById('holidayRate').textContent=fmtPct(safeDiv(a.holidayPremium,a.worked),1);
+  renderPremiumTrend(data); renderTopBar('chartNightAccounts',groupMetric(data,d=>d.account,d=>d.night),'Horas Nocturnas',10,COLORS.cyan); renderTopBar('chartSunAccounts',groupMetric(data,d=>d.account,d=>d.sunPremium),'Recargo Dominical',10,COLORS.amber); renderTopBar('chartHolidayAccounts',groupMetric(data,d=>d.account,d=>d.holidayPremium),'Recargo Festivo',10,COLORS.purple);
+}
+function renderPremiumTrend(data){
+  const cuts=sortedCutAgg(data),id='chartPremiumTrend'; killChart(id); const ctx=document.getElementById(id); if(!cuts.length){chartStore[id]=emptyChart(ctx,'Sin datos');return;}
+  chartStore[id]=new Chart(ctx,{type:'bar',data:{labels:cuts.map(c=>shortCutLabel(c.cut)),datasets:[{label:'Horas Nocturnas',data:cuts.map(c=>c.night),backgroundColor:COLORS.cyan,borderRadius:3},{label:'Recargo Dominical',data:cuts.map(c=>c.sunPremium),backgroundColor:COLORS.amber,borderRadius:3},{label:'Recargo Festivo',data:cuts.map(c=>c.holidayPremium),backgroundColor:COLORS.purple,borderRadius:3}]},options:baseChartOptions({plugins:{legend:{position:'top',labels:{boxWidth:10,font:{size:10}}},tooltip:{callbacks:{label:c=>{const cut=cuts[c.dataIndex];const rate=safeDiv(c.raw,cut.worked);return `${c.dataset.label}: ${fmtNum(c.raw,1)} h · ${fmtPct(rate,1)} de hrs trabajadas`;}}},datalabels:{display:cuts.length<=16,anchor:'end',align:'end',formatter:v=>v>=50?fmtNum(v,0):''}},scales:{x:{grid:{display:false},ticks:{font:{size:9},maxRotation:45}},y:{beginAtZero:true,grid:{color:'#eef2f6'},title:{display:true,text:'Horas-concepto'}}}})});
+}
+
+function analyzeQuality(data){
+  const ids=new Set(),cuts=new Set(); let reasonMissingHours=0,reasonMissingRows=0,invalidIHRows=0,invalidDateRows=0,missingIdRows=0,negativeRows=0,cutDayDifferent=0; let ordinary=0,reasoned=0;
+  for(const d of data){ ids.add(d.id);cuts.add(d.cut);ordinary+=d.ordinaryOT;if(d.reason)reasoned+=d.ordinaryOT; if(d.ordinaryOT>0&&!d.reason){reasonMissingHours+=d.ordinaryOT;reasonMissingRows++;} if(d.ih<24||d.ih>60)invalidIHRows++; if(!d.fecha||isNaN(d.fecha))invalidDateRows++; if(!d.id||d.id==='SIN_ID')missingIdRows++; if([d.worked,d.sunPremium,d.sunOT,d.holidayPremium,d.holidayOT,d.night,d.ordinaryOT].some(x=>x<0))negativeRows++; if(d.sourceCutDays!=null && Math.round(d.sourceCutDays)!==Math.round(d.cutDays))cutDayDifferent++; }
+  const codeCounts=new Map(); for(const c of cuts){ const m=String(c).trim().match(/^([A-Za-z]+)/); if(m)codeCounts.set(m[1].toUpperCase(),(codeCounts.get(m[1].toUpperCase())||0)+1); }
+  const duplicateCutCodes=[...codeCounts.entries()].filter(x=>x[1]>1).map(x=>x[0]);
+  return {rows:data.length,hc:ids.size,cutCount:cuts.size,reasonMissingHours,reasonMissingRows,reasonCoverage:safeDiv(reasoned,ordinary),invalidIHRows,invalidDateRows,missingIdRows,negativeRows,cutDayDifferent,duplicateCutCodes};
+}
+function renderQualityBase(){
+  const q=qualityState; document.getElementById('qRows').textContent=fmtNum(q.rows);document.getElementById('qHC').textContent=fmtNum(q.hc);document.getElementById('qCuts').textContent=q.cutCount;document.getElementById('qReasonMissing').textContent=fmtNum(q.reasonMissingHours,1);document.getElementById('qIH').textContent=fmtNum(q.invalidIHRows);
+  const desc={director:'Director WFM',manager:'Manager WFM',id:'ID único del empleado',name:'Nombre del empleado',role:'Role del empleado',ih:'Intensidad horaria semanal',fecha:'Fecha del registro',realInicio:'Inicio real del tramo',realFin:'Fin real del tramo',worked:'Horas totales del tramo',sunPremium:'Horas con recargo dominical',sunOT:'Horas extra dominicales',holidayPremium:'Horas con recargo festivo',holidayOT:'Horas extra festivas',night:'Horas nocturnas',ordinaryOT:'Horas extra ordinarias',account:'Cuenta / operación',cutStart:'Fecha inicio corte',cutEnd:'Fecha fin corte',cutDays:'Días del corte (fuente)',concat:'Concatenado auxiliar',cut:'Corte de nómina',reason:'Motivo de hora extra'};
+  const order=['director','manager','id','name','role','ih','fecha','realInicio','realFin','worked','sunPremium','sunOT','holidayPremium','holidayOT','night','ordinaryOT','account','cutStart','cutEnd','cutDays','concat','cut','reason'];
+  document.getElementById('schemaGrid').innerHTML=order.map(k=>{const x=columnAudit[k]||{};return `<div class="schema-item"><b>${escapeHtml(x.header||HEADER_ALIASES[k]?.[0]||k)} ${x.found?'✓':'⚠'}</b><span>${escapeHtml(desc[k]||k)}</span></div>`}).join('');
+  const alerts=[]; const requiredMissing=REQUIRED_FIELDS.filter(f=>!columnAudit[f]?.found); if(requiredMissing.length)alerts.push(['red',`Faltan columnas requeridas: ${requiredMissing.join(', ')}`]); else alerts.push(['green','Todas las columnas críticas fueron reconocidas por nombre exacto/alias controlado.']);
+  if(q.reasonMissingHours>0)alerts.push(['amber',`${fmtNum(q.reasonMissingHours,1)} h de OT ordinaria no tienen Motivo Extra (${fmtNum(q.reasonMissingRows)} filas).`]); else alerts.push(['green',`Cobertura de Motivo Extra sobre OT ordinaria: ${fmtPct(q.reasonCoverage,1)}.`]);
+  if(q.invalidIHRows>0)alerts.push(['amber',`${fmtNum(q.invalidIHRows)} fila(s) tienen IH fuera de 24–60 h/semana y requieren revisión.`]);
+  if(q.invalidDateRows>0)alerts.push(['red',`${fmtNum(q.invalidDateRows)} fila(s) tienen Fecha inválida o vacía.`]);
+  if(q.missingIdRows>0)alerts.push(['red',`${fmtNum(q.missingIdRows)} fila(s) no tienen BMS ID.`]);
+  if(q.negativeRows>0)alerts.push(['amber',`${fmtNum(q.negativeRows)} fila(s) tienen horas negativas.`]);
+  if(q.cutDayDifferent>0)alerts.push(['amber',`${fmtNum(q.cutDayDifferent)} fila(s) tienen “Dias” distinto a la duración inclusiva. El dashboard usa Fin Corte − Inicio Corte + 1.`]);
+  if(q.duplicateCutCodes?.length)alerts.push(['amber',`Código inicial de corte repetido: ${q.duplicateCutCodes.join(', ')}. El dashboard ordena por Inicio Corte para no depender de esa letra.`]);
+  alerts.push(['green','Recargos/nocturnidad se mantienen separados de OT para evitar doble conteo de horas-concepto.']);
+  document.getElementById('qualityAlerts').innerHTML=alerts.map(([c,t])=>`<div style="display:flex;gap:8px;align-items:flex-start;border-bottom:1px solid #eef2f6;padding:9px 0"><span class="pill ${c}">${c==='green'?'OK':c==='red'?'CRÍTICO':'REVISAR'}</span><span class="small" style="line-height:1.5">${escapeHtml(t)}</span></div>`).join('');
+}
+function renderDetail(data){
+  const body=document.getElementById('detailBody'); document.getElementById('detailCountTag').textContent=`${fmtNum(data.length)} filas`;
+  const rows=data.slice().sort((a,b)=>(b.fecha-a.fecha)||b.ot-a.ot).slice(0,500); if(!rows.length){body.innerHTML='<tr><td colspan="18" style="text-align:center;padding:22px;color:#7a8699">Sin registros para los filtros actuales.</td></tr>';return;}
+  body.innerHTML=rows.map(d=>`<tr><td>${fmtDate(d.fecha)}</td><td>${escapeHtml(shortCutLabel(d.cut))}</td><td>${escapeHtml(d.id)}</td><td><b>${escapeHtml(d.name)}</b></td><td>${escapeHtml(d.role)}</td><td>${escapeHtml(d.director)}</td><td>${escapeHtml(d.manager)}</td><td>${escapeHtml(d.account)}</td><td class="num">${fmtNum(d.ih,0)}</td><td class="num">${fmtNum(d.worked,1)}</td><td class="num">${fmtNum(d.ordinaryOT,1)}</td><td class="num">${fmtNum(d.sunOT,1)}</td><td class="num">${fmtNum(d.holidayOT,1)}</td><td class="num"><b>${fmtNum(d.ot,1)}</b></td><td class="num">${fmtNum(d.sunPremium,1)}</td><td class="num">${fmtNum(d.holidayPremium,1)}</td><td class="num">${fmtNum(d.night,1)}</td><td>${escapeHtml(d.reason||'')}</td></tr>`).join('');
+}
+function exportFilteredCSV(){
+  if(!filteredData.length){alert('No hay registros filtrados para exportar.');return;}
+  const headers=['Fecha','Corte','WFM Dir','WF Mng','BMS ID','Name','Role','IH','Cuenta','Horas Totales (h)','Recargo Dominical (h)','Extras Dominicales (h)','Recargo Festivo (h)','Extras Festivas (h)','Horas Nocturnas (h)','extras ordinarias','OT Total Calculada','Motivo Extra'];
+  const esc=v=>{const s=String(v??''); return /[",\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s;}; const lines=[headers.map(esc).join(',')];
+  for(const d of filteredData)lines.push([fmtDate(d.fecha),d.cut,d.director,d.manager,d.id,d.name,d.role,d.ih,d.account,d.worked,d.sunPremium,d.sunOT,d.holidayPremium,d.holidayOT,d.night,d.ordinaryOT,d.ot,d.reason].map(esc).join(','));
+  const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); const cut=document.getElementById('fCut').value; a.href=url;a.download=`WFM_Payroll_Analytics_${cut==='all'?'Historico':cut.replace(/[^a-z0-9]+/gi,'_')}.csv`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+</script>
+</body>
+</html>
